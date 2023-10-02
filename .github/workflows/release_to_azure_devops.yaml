@@ -4,10 +4,11 @@ on:
   push:
     tags:
       - 'v*'
-
+  workflow_dispatch:
+  
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs_on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -25,8 +26,6 @@ jobs:
         with:
           pat: ${{ secrets.AZURE_DEVOPS_PAT }}
           args: tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all
-
-
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
