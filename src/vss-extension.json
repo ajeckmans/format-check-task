@@ -1,0 +1,37 @@
+{
+    "manifestVersion": 1,
+    "id": "format-check",
+    "name": "Format Check",
+    "version": "1.0.0",
+    "publisher": "ajeckmans",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "description": "This is a custom task designed to check and ensure the correct formatting of your code files.",
+    "categories": [],
+    "icons": {
+        "default": "images/my-icon.png"
+    },
+    "files": [
+        {
+            "path": "task.json"
+        },
+        {
+            "path": "scripts/format-check.ps1"
+        }
+    ],
+    "contributions": [
+        {
+            "id": "format-check",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "format-check"
+            }
+        }
+    ]
+}
