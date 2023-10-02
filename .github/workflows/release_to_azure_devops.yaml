@@ -22,7 +22,7 @@ jobs:
           tfx extension create --manifest-globs vss-extension.json
 
       - name: Publish to Azure DevOps Marketplace
-        uses: microsoft/azure-devops-extension/run@v1
+        uses: microsoft/azure-devops-extension-tasks/run@v1
         with:
           pat: ${{ secrets.AZURE_DEVOPS_PAT }}
           args: tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all
