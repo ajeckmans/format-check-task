@@ -22,11 +22,14 @@ jobs:
           tfx extension create --manifest-globs vss-extension.json
 
       - name: Publish to Azure DevOps Marketplace
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-          pat: ${{ secrets.AZURE_DEVOPS_PAT }}
-        run: npm tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all
+        run: |
+          wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
+          . ~/.nvm/nvm.sh
+          nvm install 16
+          npm install -g tfx-cli
+          tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all
+        env:
+          AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
