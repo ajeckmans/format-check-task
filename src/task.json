@@ -1,0 +1,18 @@
+{
+    "id": "c0fce034-e7fa-4b48-8feb-1bf86660cb0b",
+    "name": "FormatCheckTask",
+    "friendlyName": "Code Format Checker",
+    "description": "Checks if code formatting is correct using dotnet format. Any issues found are posted as a comment to the PR.",
+    "author": "A. Jeckmans",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0
+    },
+    "runsOn": ["Agent", "DeploymentGroup"],
+    "execution": {
+        "PowerShell3": {
+            "target": "formatCheck.ps1"
+        }
+    }
+}
