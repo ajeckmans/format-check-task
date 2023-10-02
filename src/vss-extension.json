@@ -10,7 +10,7 @@
         }
     ],
     "description": "This is a custom task designed to check and ensure the correct formatting of your code files.",
-    "categories": [],
+    "categories": ["Build and release", "Code", "Test and feedback"],
     "icons": {
         "default": "images/my-icon.png"
     },
