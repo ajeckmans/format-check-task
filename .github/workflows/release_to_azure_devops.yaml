@@ -25,3 +25,15 @@ jobs:
         with:
           pat: ${{ secrets.AZURE_DEVOPS_PAT }}
           args: tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all
+
+
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
