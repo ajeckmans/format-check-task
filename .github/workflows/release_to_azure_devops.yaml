@@ -24,4 +24,4 @@ jobs:
         uses: microsoft/azure-devops-extension/run@v1
         with:
             pat: ${{ secrets.AZURE_DEVOPS_PAT }}
-            args: ```tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all```
+            args: tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all
