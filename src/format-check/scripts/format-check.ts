@@ -1,10 +1,10 @@
-import {exec, execSync} from 'child_process';
+import {execSync} from 'child_process';
 import * as fs from 'fs';
 import dotenv from 'dotenv';
 import * as azdev from "azure-devops-node-api";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces"
 
-import { FormatReports } from './format-report.interface';
+import {FormatReports} from './format-report.interface';
 
 async function main() {
     // Loading environment variables
@@ -51,10 +51,13 @@ async function main() {
         const formatCmd = `dotnet format ${solutionPath} --verify-no-changes --verbosity diagnostic --report ${reportPath}`;
         console.log(`Running dotnet format command. (${formatCmd})`);
 
-        const dotnetFormatVersion = execSync("dotnet format --version", { encoding: 'utf8' });
+        const dotnetFormatVersion = execSync("dotnet format --version", {encoding: 'utf8'});
         console.log(`uwing dotnet format version ${dotnetFormatVersion}`);
 
-        execSync(formatCmd);
+        try {
+            execSync(formatCmd);
+        } catch (e) {
+        }
         console.log("Dotnet format command completed.");
 
         console.log("Fetching existing threads.");
@@ -72,7 +75,7 @@ async function main() {
         const reports = JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
 
         let activeIssuesContent = [];
-        
+
         for (const report of reports) {
             for (const change of report.FileChanges) {
                 const content = `[Automated] ${change.DiagnosticId}: ${change.FormatDescription}`;
@@ -117,7 +120,7 @@ async function main() {
                 await gitApi.updateThread(closedThread, repoId, parseInt(pullRequestId), existingThread.id, projectId);
             }
         }
-        
+
         // Fail the build
         console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
         console.log("Format check script completed.");
