@@ -52,7 +52,7 @@ async function main() {
         console.log(`Running dotnet format command. (${formatCmd})`);
 
         const dotnetFormatVersion = execSync("dotnet format --version", {encoding: 'utf8'});
-        console.log(`uwing dotnet format version ${dotnetFormatVersion}`);
+        console.log(`using dotnet format version ${dotnetFormatVersion}`);
 
         try {
             execSync(formatCmd);
@@ -87,8 +87,10 @@ async function main() {
                     commentType: gi.CommentType.Text
                 };
 
+                const comments = existingThread ? [comment, ...existingThread.comments.slice(1)] : [comment];
+
                 const thread = <gi.GitPullRequestCommentThread>{
-                    comments: [comment, ...existingThread.comments.slice(1)],
+                    comments: comments,
                     status: gi.CommentThreadStatus.Active,
                     lastUpdatedDate: new Date(),
                     threadContext: {
