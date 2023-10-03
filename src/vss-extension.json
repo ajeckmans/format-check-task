@@ -16,10 +16,10 @@
     },
     "files": [
         {
-            "path": "task.json"
+            "path": "format-check/task.json"
         },
         {
-            "path": "scripts/format-check.ps1"
+            "path": "format-check/scripts/format-check.ps1"
         }
     ],
     "contributions": [
