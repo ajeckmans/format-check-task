@@ -36,9 +36,7 @@ jobs:
         id: publish
         run: |
           cd src
-          tfx extension publish --manifest-globs vss-extension.json --share-with all --rev-version --token "${{ secrets.AZURE_DEVOPS_PAT }}"
-          extVersion=$(tfx extension show --extension-id "format-check" --publisher "ajeckmans" --token "${{ secrets.AZURE_DEVOPS_PAT }}" --json | jq -r '.versions[0].version')
-          echo "::set-output name=version::$extVersion"
+          tfx extension publish --manifest-globs vss-extension.json --share-with all --token "${{ secrets.AZURE_DEVOPS_PAT }}" --version "${{ env.VERSION }}"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -46,7 +44,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ needs.publish.outputs.version }}
+          release_name: Release ${{ env.VERSION }}
           draft: ${{ startsWith(github.ref, 'refs/tags/v') == false }}
           prerelease: ${{ startsWith(github.ref, 'refs/tags/v') == false }}
         if: startsWith(github.ref, 'refs/tags/v') == true || startsWith(github.ref, 'refs/tags/v') == false
