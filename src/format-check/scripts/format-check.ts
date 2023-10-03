@@ -19,7 +19,15 @@ async function main() {
 
     // Task parameters
     const solutionPath = process.env.INPUT_SOLUTIONPATH;
+    const orgUrl = process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI;
+    const repoId = process.env.BUILD_REPOSITORY_ID;
+    const projectId = process.env.SYSTEM_TEAMPROJECTID;
+
     console.log('Solution Path:', solutionPath);
+    console.log('Organization URL:', orgUrl);
+    console.log('Repo ID:', repoId);
+    console.log('Project ID:', projectId);
+    console.log('Pull Request ID:', pullRequestId);
 
     const reportPath = "format-report.json";
 
@@ -57,22 +65,16 @@ async function main() {
             console.log("Dotnet format command completed.");
         });
 
-
         console.log("Fetching existing threads with pagination.");
 
-        const orgUrl = process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI;
         const token = process.env.SYSTEM_ACCESSTOKEN;
         const authHandler = azdev.getPersonalAccessTokenHandler(token);
         const connection = new azdev.WebApi(orgUrl, authHandler);
 
         const gitApi = await connection.getGitApi();
 
-        const repoId = process.env.BUILD_REPOSITORY_ID;
-        const projectId = process.env.SYSTEM_TEAMPROJECTID;
-        const pullRequestId = parseInt(process.env.SYSTEM_PULLREQUEST_PULLREQUESTID);
-
         // Fetching existing threads
-        const existingThreads = await gitApi.getThreads(repoId, pullRequestId, projectId);
+        const existingThreads = await gitApi.getThreads(repoId, parseInt(pullRequestId), projectId);
 
 
         console.log("Completed fetching existing threads.");
@@ -106,10 +108,10 @@ async function main() {
 
                 if (existingThread) {
                     console.log("Updating existing thread.");
-                    await gitApi.updateThread(thread, repoId, pullRequestId, existingThread.id, projectId);
+                    await gitApi.updateThread(thread, repoId, parseInt(pullRequestId), existingThread.id, projectId);
                 } else {
                     console.log("Creating new thread.");
-                    await gitApi.createThread(thread, repoId, pullRequestId, projectId);
+                    await gitApi.createThread(thread, repoId, parseInt(pullRequestId), projectId);
                 }
             }
         }
@@ -123,7 +125,7 @@ async function main() {
                     ...existingThread,
                     status: gi.CommentThreadStatus.Closed
                 };
-                await gitApi.updateThread(closedThread, repoId, pullRequestId, existingThread.id, projectId);
+                await gitApi.updateThread(closedThread, repoId, parseInt(pullRequestId), existingThread.id, projectId);
             }
         }
         
