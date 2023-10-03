@@ -33,8 +33,8 @@ jobs:
         run: |
           cd src
           tfx extension publish --manifest-globs vss-extension.json --share-with all
-          $extVersion = tfx extension show --extension-id format-check --publisher ajeckmans --json | jq -r '.versions[0].version'
-          echo "EXTENSION_VERSION=$extVersion"  >> $GITHUB_ENV
+          extVersion=$(tfx extension show --extension-id format-check --publisher ajeckmans --json | jq -r '.versions[0].version')
+          echo "EXTENSION_VERSION=$extVersion" >> $GITHUB_ENV
         env:
           AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
 
