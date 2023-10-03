@@ -1,6 +1,6 @@
 import {exec} from 'child_process';
 import * as fs from 'fs';
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import * as azdev from "azure-devops-node-api";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces"
 

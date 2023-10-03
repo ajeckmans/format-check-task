@@ -16,13 +16,15 @@
     },
     "files": [
         {
+            "path": "format-check/node_modules",
+            "addressable": true
+        },
+        {
+            "path": "format-check/scripts",
+            "addressable": true
+        },
+        {
             "path": "format-check/task.json"
-        },
-        {
-            "path": "format-check/scripts/format-check.js"
-        },
-        {
-            "path": "format-check/scripts/format-report.interface.js"
         }
     ],
     "contributions": [
