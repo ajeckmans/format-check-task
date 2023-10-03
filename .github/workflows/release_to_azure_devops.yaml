@@ -34,7 +34,7 @@ jobs:
       - name: Update task version
         run: |
           cd src/format-check
-          node .github/workflows/update-task-version.js vss-extensions.json task.json
+          node ../../.github/workflows/update-task-version.js ${{ env.VERSION }} task.json
 
       - name: Compile TypeScript
         run: |
