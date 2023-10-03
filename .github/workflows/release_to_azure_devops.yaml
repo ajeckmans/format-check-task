@@ -29,6 +29,7 @@ jobs:
       - name: Compile TypeScript
         run: |
           cd src/format-check
+          npm ci
           tsc
 
       - name: Publish to Azure DevOps Marketplace
