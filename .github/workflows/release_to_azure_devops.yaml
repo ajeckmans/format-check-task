@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -e {0}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -36,7 +39,7 @@ jobs:
           extVersion=$(tfx extension show --extension-id format-check --publisher ajeckmans --json | jq -r '.versions[0].version')
           echo "EXTENSION_VERSION=$extVersion" >> $GITHUB_ENV
         env:
-          AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
+          TFS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
