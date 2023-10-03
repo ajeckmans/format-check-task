@@ -51,6 +51,9 @@ async function main() {
         const formatCmd = `dotnet format ${solutionPath} --verify-no-changes --verbosity diagnostic --report ${reportPath}`;
         console.log(`Running dotnet format command. (${formatCmd})`);
 
+        const dotnetFormatVersion = execSync("dotnet format --version", { encoding: 'utf8' });
+        console.log(`uwing dotnet format version ${dotnetFormatVersion}`);
+
         execSync(formatCmd);
         console.log("Dotnet format command completed.");
 
