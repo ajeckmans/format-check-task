@@ -32,7 +32,7 @@ jobs:
       - name: Publish to Azure DevOps Marketplace
         run: |
           cd src
-          tfx extension publish --manifest-globs vss-extension.json -share-with all
+          tfx extension publish --manifest-globs vss-extension.json --share-with all
           $extVersion = tfx extension show --extension-id format-check --publisher ajeckmans --json | jq -r '.versions[0].version'
           echo "EXTENSION_VERSION=$extVersion"  >> $GITHUB_ENV
         env:
