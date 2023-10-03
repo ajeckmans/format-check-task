@@ -1,4 +1,4 @@
-import {exec} from 'child_process';
+import {exec, execSync} from 'child_process';
 import * as fs from 'fs';
 import dotenv from 'dotenv';
 import * as azdev from "azure-devops-node-api";
@@ -46,28 +46,21 @@ async function main() {
         fs.unlinkSync(reportPath);
     }
 
-    // Run dotnet format with verbosity and reporting
-    const formatCmd = `dotnet format ${solutionPath} --verify-no-changes -v diag --report ${reportPath}`;
-    console.log("Running dotnet format command.");
-
     try {
-        exec(formatCmd, (error, _stdout) => {
-            if (error) {
-                console.error(`Error: ${error}`);
-                process.exit(1);
-            }
-            console.log("Dotnet format command completed.");
-        });
+        // Run dotnet format with verbosity and reporting
+        const formatCmd = `dotnet format ${solutionPath} --verify-no-changes --verbosity diagnostic --report ${reportPath}`;
+        console.log(`Running dotnet format command. (${formatCmd})`);
 
-        console.log("Fetching existing threads with pagination.");
+        execSync(formatCmd);
+        console.log("Dotnet format command completed.");
 
+        console.log("Fetching existing threads.");
         const token = process.env.SYSTEM_ACCESSTOKEN;
         const authHandler = azdev.getPersonalAccessTokenHandler(token);
         const connection = new azdev.WebApi(orgUrl, authHandler);
 
         const gitApi = await connection.getGitApi();
 
-        // Fetching existing threads
         const existingThreads = await gitApi.getThreads(repoId, parseInt(pullRequestId), projectId);
 
         console.log("Completed fetching existing threads.");
