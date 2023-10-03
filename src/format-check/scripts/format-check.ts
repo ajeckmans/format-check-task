@@ -42,12 +42,6 @@ async function main() {
         process.exit(1);
     }
 
-    // Validate reportPath
-    if (!reportPath.trim()) {
-        console.error("Report path is not set.");
-        process.exit(1);
-    }
-
     if (fs.existsSync(reportPath)) {
         fs.unlinkSync(reportPath);
     }
@@ -76,11 +70,10 @@ async function main() {
         // Fetching existing threads
         const existingThreads = await gitApi.getThreads(repoId, parseInt(pullRequestId), projectId);
 
-
         console.log("Completed fetching existing threads.");
 
-        // Load JSON report
-        const reports = JSON.parse(fs.readFileSync(process.env.reportPath, 'utf8')) as FormatReports;
+        console.log("Loading error report.");
+        const reports = JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
 
         let activeIssuesContent = [];
         
