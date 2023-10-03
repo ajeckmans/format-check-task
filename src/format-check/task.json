@@ -9,5 +9,15 @@
         "Node10": {
             "target": "scripts/format-check.js"
         }
-    }
+    },
+    "inputs": [
+        {
+            "name": "SolutionPath",
+            "type": "string",
+            "label": "Solution Path",
+            "defaultValue": "",
+            "required": true,
+            "helpMarkDown": "Specify the path to the solution directory."
+        }
+    ]
 }
