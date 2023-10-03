@@ -26,11 +26,17 @@ jobs:
       - name: Install packages globally
         run: npm install -g tfx-cli typescript
 
+      - name: navigate to task folder
+        run: cd src/format-check
+
+      - name: Restore npm packages
+        run: npm ci
+
+      - name: Update task version
+        run: node update-task-version.js
+
       - name: Compile TypeScript
-        run: |
-          cd src/format-check
-          npm ci
-          tsc
+        run: tsc
 
       - name: Publish to Azure DevOps Marketplace
         id: publish
