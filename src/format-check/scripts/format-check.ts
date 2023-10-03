@@ -78,7 +78,7 @@ async function main() {
 
         for (const report of reports) {
             for (const change of report.FileChanges) {
-                const content = `[Automated] ${change.DiagnosticId}: ${change.FormatDescription}`;
+                const content = `[Automated] ${report.FilePath} - ${change.DiagnosticId}: ${change.FormatDescription}`;
                 activeIssuesContent.push(content);  // Keep track of active issues
                 const existingThread = existingThreads.find(thread => thread.comments.some(comment => comment.content === content));
 
@@ -87,24 +87,27 @@ async function main() {
                     commentType: gi.CommentType.Text
                 };
 
-                const comments = existingThread ? [comment, ...existingThread.comments.slice(1)] : [comment];
-
-                const thread = <gi.GitPullRequestCommentThread>{
-                    comments: comments,
-                    status: gi.CommentThreadStatus.Active,
-                    lastUpdatedDate: new Date(),
-                    threadContext: {
-                        filePath: report.FilePath,
-                        rightFileStart: {line: change.LineNumber, offset: change.CharNumber},
-                        rightFileEnd: {line: change.LineNumber, offset: change.CharNumber + 1}
-                    }
-                };
 
                 if (existingThread) {
                     console.log("Updating existing thread.");
+
+                    const thread = {
+                        ...existingThread,
+                        comments: [comment, ...existingThread.comments.slice(1)],
+                        status: gi.CommentThreadStatus.Active
+                    };
                     await gitApi.updateThread(thread, repoId, parseInt(pullRequestId), existingThread.id, projectId);
                 } else {
                     console.log("Creating new thread.");
+                    const thread = <gi.GitPullRequestCommentThread>{
+                        comments: [comment],
+                        status: gi.CommentThreadStatus.Active,
+                        threadContext: {
+                            filePath: report.FilePath,
+                            rightFileStart: {line: change.LineNumber, offset: change.CharNumber},
+                            rightFileEnd: {line: change.LineNumber, offset: change.CharNumber + 1}
+                        }
+                    };
                     await gitApi.createThread(thread, repoId, parseInt(pullRequestId), projectId);
                 }
             }
