@@ -1,0 +1,32 @@
+[
+  {
+    "DocumentId": {
+      "ProjectId": {
+        "Id": "df8a79f8-512b-443e-8007-e5fac1af4d03"
+      },
+      "Id": "058cdd42-20bc-4c2a-866c-515f4b12c996"
+    },
+    "FileName": "Program.cs",
+    "FilePath": "C:\\format check task test project\\Program.cs",
+    "FileChanges": [
+      {
+        "LineNumber": 2,
+        "CharNumber": 1,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "Fix whitespace formatting. Delete 4 characters."
+      },
+      {
+        "LineNumber": 4,
+        "CharNumber": 18,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "Fix whitespace formatting. Delete 1 characters."
+      },
+      {
+        "LineNumber": 4,
+        "CharNumber": 20,
+        "DiagnosticId": "WHITESPACE",
+        "FormatDescription": "Fix whitespace formatting. Delete 1 characters."
+      }
+    ]
+  }
+]

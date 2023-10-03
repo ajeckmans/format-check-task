@@ -11,8 +11,8 @@
     },
     "runsOn": ["Agent", "DeploymentGroup"],
     "execution": {
-        "PowerShell3": {
-            "target": "scripts/format-check.ps1"
+        "Node10": {
+            "target": "scripts/format-check.ts"
         }
     }
 }
