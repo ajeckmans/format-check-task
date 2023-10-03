@@ -33,8 +33,8 @@ jobs:
 
       - name: Update task version
         run: |
-         cd src/format-check
-         node update-task-version.js
+          cd src/format-check
+          node .github/workflows/update-task-version.js vss-extensions.json task.json
 
       - name: Compile TypeScript
         run: |
