@@ -32,7 +32,9 @@ jobs:
       - name: Publish to Azure DevOps Marketplace
         run: |
           cd src
-          tfx extension publish --manifest-globs vss-extension.json --overrides-file manifest-override.json --rev-version --share-with all
+          tfx extension publish --manifest-globs vss-extension.json --rev-version $(VERSION) --share-with all
+
+
         env:
           AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
 
