@@ -35,7 +35,7 @@ jobs:
         id: publish
         run: |
           cd src
-          tfx extension publish --manifest-globs vss-extension.json --share-with all --token "${{ secrets.AZURE_DEVOPS_PAT }}" --version "${{ env.VERSION }}"
+          tfx extension publish --manifest-globs vss-extension.json --share-with all --token "${{ secrets.AZURE_DEVOPS_PAT }}" --version-override "${{ env.VERSION }}"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
