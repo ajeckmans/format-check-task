@@ -26,16 +26,11 @@ jobs:
       - name: Install tfx-cli globally
         run: npm install -g tfx-cli
 
-      - name: Build task
-        run: |
-          cd src
-          tfx extension create --manifest-globs vss-extension.json
-
       - name: Publish to Azure DevOps Marketplace
         id: publish
         run: |
           cd src
-          tfx extension publish --manifest-globs vss-extension.json --share-with all --token "${{ secrets.AZURE_DEVOPS_PAT }}" --version-override "${{ env.VERSION }}"
+          tfx extension publish --manifest-globs vss-extension.json --share-with all --token "${{ secrets.AZURE_DEVOPS_PAT }}" --override "{\"version\": \"${{ env.VERSION }}\"}"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
