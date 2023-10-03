@@ -12,7 +12,7 @@
     "runsOn": ["Agent", "DeploymentGroup"],
     "execution": {
         "Node10": {
-            "target": "scripts/format-check.ts"
+            "target": "scripts/format-check.js"
         }
     }
 }
