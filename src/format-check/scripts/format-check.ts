@@ -87,7 +87,6 @@ async function main() {
                     commentType: gi.CommentType.Text
                 };
 
-
                 if (existingThread) {
                     console.log("Updating existing thread.");
 
@@ -103,7 +102,7 @@ async function main() {
                         comments: [comment],
                         status: gi.CommentThreadStatus.Active,
                         threadContext: {
-                            filePath: report.FilePath,
+                            filePath: report.FilePath.replace(`${process.env.BUILD_SOURCESDIRECTORY}/`, ''),
                             rightFileStart: {line: change.LineNumber, offset: change.CharNumber},
                             rightFileEnd: {line: change.LineNumber, offset: change.CharNumber + 1}
                         }
