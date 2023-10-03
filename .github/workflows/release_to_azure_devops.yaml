@@ -35,7 +35,7 @@ jobs:
       - name: Publish to Azure DevOps Marketplace
         id: publish
         run: |
-          cd ..
+          cd src
           tfx extension publish --manifest-globs vss-extension.json --share-with all --token "${{ secrets.AZURE_DEVOPS_PAT }}" --override "{\"version\": \"${{ env.VERSION }}\"}"
 
       - name: Create GitHub Release
