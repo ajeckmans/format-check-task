@@ -19,7 +19,10 @@
             "path": "format-check/task.json"
         },
         {
-            "path": "format-check/scripts/format-check.ps1"
+            "path": "format-check/scripts/format-check.js"
+        },
+        {
+            "path": "format-check/scripts/format-report.interface.js"
         }
     ],
     "contributions": [

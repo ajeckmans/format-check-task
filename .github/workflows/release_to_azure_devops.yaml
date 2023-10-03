@@ -23,13 +23,18 @@ jobs:
         with:
           node-version: 'lts/*'
         
-      - name: Install tfx-cli globally
-        run: npm install -g tfx-cli
+      - name: Install packages globally
+        run: npm install -g tfx-cli typescript
+
+      - name: Compile TypeScript
+        run: |
+          cd src/format-check
+          tsc
 
       - name: Publish to Azure DevOps Marketplace
         id: publish
         run: |
-          cd src
+          cd ..
           tfx extension publish --manifest-globs vss-extension.json --share-with all --token "${{ secrets.AZURE_DEVOPS_PAT }}" --override "{\"version\": \"${{ env.VERSION }}\"}"
 
       - name: Create GitHub Release
