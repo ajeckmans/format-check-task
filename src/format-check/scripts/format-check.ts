@@ -18,7 +18,9 @@ async function main() {
     }
 
     // Task parameters
-    const solutionPath = process.env.SolutionPath;
+    const solutionPath = process.env.INPUT_SOLUTIONPATH;
+    console.log('Solution Path:', solutionPath);
+
     const reportPath = "format-report.json";
 
     // Validate solutionPath

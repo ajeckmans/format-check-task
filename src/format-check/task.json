@@ -7,7 +7,10 @@
     "runsOn": ["Agent", "DeploymentGroup"],
     "execution": {
         "Node10": {
-            "target": "scripts/format-check.js"
+            "target": "scripts/format-check.js",
+            "inputs": {
+                "solutionPath": "INPUT_SOLUTIONPATH"
+            }
         }
     },
     "inputs": [
