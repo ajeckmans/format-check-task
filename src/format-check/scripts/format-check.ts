@@ -78,7 +78,7 @@ async function main() {
 
         for (const report of reports) {
             for (const change of report.FileChanges) {
-                const content = `[Automated] ${report.FilePath} - ${change.DiagnosticId}: ${change.FormatDescription}`;
+                const content = `[Automated] ${report.FilePath} - ${change.DiagnosticId}: ${change.FormatDescription} on line ${change.LineNumber}, position ${change.CharNumber}`;
                 activeIssuesContent.push(content);  // Keep track of active issues
                 const existingThread = existingThreads.find(thread => thread.comments.some(comment => comment.content === content));
 
@@ -92,7 +92,6 @@ async function main() {
 
                     const thread = {
                         ...existingThread,
-                        comments: [comment, ...existingThread.comments.slice(1)],
                         status: gi.CommentThreadStatus.Active
                     };
                     await gitApi.updateThread(thread, repoId, parseInt(pullRequestId), existingThread.id, projectId);
