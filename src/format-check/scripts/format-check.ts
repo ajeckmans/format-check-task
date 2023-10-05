@@ -91,7 +91,6 @@ async function main() {
                     console.log("Updating existing thread.");
 
                     const thread = {
-                        ...existingThread,
                         status: gi.CommentThreadStatus.Active
                     };
                     await gitApi.updateThread(thread, repoId, parseInt(pullRequestId), existingThread.id, projectId);
@@ -112,12 +111,11 @@ async function main() {
         }
 
         // Close threads for resolved issues
-        for (const existingThread of existingThreads) {
+        for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content.startsWith('[Automated]')))) {
             const threadContent = existingThread.comments[0]?.content;
             if (!activeIssuesContent.includes(threadContent)) {
                 console.log("Closing resolved thread.");
                 const closedThread = {
-                    ...existingThread,
                     status: gi.CommentThreadStatus.Closed
                 };
                 await gitApi.updateThread(closedThread, repoId, parseInt(pullRequestId), existingThread.id, projectId);
