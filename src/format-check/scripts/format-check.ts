@@ -78,7 +78,7 @@ async function main() {
 
         for (const report of reports) {
             for (const change of report.FileChanges) {
-                const content = `[Automated] ${report.FilePath} - ${change.DiagnosticId}: ${change.FormatDescription} on line ${change.LineNumber}, position ${change.CharNumber}`;
+                const content = `[Automated] ${change.DiagnosticId}: ${change.FormatDescription} on line ${change.LineNumber}, position ${change.CharNumber}`;
                 activeIssuesContent.push(content);  // Keep track of active issues
                 const existingThread = existingThreads.find(thread => thread.comments.some(comment => comment.content === content));
 
@@ -101,7 +101,7 @@ async function main() {
                         comments: [comment],
                         status: gi.CommentThreadStatus.Active,
                         threadContext: {
-                            filePath: report.FilePath.replace(`${process.env.BUILD_SOURCESDIRECTORY}/`, ''),
+                            filePath: report.FilePath.replace(`${process.env.BUILD_SOURCESDIRECTORY}`, ''),
                             rightFileStart: {line: change.LineNumber, offset: change.CharNumber},
                             rightFileEnd: {line: change.LineNumber, offset: change.CharNumber + 1}
                         }

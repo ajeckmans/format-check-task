@@ -56,4 +56,3 @@ jobs:
           release_name: Release ${{ env.VERSION }}
           draft: ${{ startsWith(github.ref, 'refs/tags/v') == false }}
           prerelease: ${{ startsWith(github.ref, 'refs/tags/v') == false }}
-        if: startsWith(github.ref, 'refs/tags/v') == true || startsWith(github.ref, 'refs/tags/v') == false
