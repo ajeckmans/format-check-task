@@ -1,58 +1,97 @@
 name: Release to Azure DevOps Marketplace
 
 on:
-  push:
-    tags:
-      - 'v*'
-  
+    push:
+        tags:
+            - 'v*'
+    pull_request:
+        branches:
+            - '**'
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -e {0}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    package-and-publish:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                shell: bash -e {0}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
 
-      - name: Set version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV  
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v2
+              with:
+                  node-version: 'lts/*'
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v2
-        with:
-          node-version: 'lts/*'
-        
-      - name: Install packages globally
-        run: npm install -g tfx-cli typescript
+            - name: Install packages globally
+              run: npm install -g tfx-cli typescript
 
-      - name: Restore npm packages
-        run: |
-         cd src/format-check
-         npm ci
+            - name: Set version (tag push)
+              if: startsWith(github.ref, 'refs/tags/v')
+              run: |
+                  VERSION=${GITHUB_REF#refs/tags/v}
+                  echo "EXT_VERSION=${VERSION}" >> $GITHUB_ENV
 
-      - name: Update task version
-        run: |
-          cd src/format-check
-          node ../../.github/workflows/update-task-version.js ${{ env.VERSION }} task.json
+            - name: Set version (PR)
+              if: github.event_name == 'pull_request'
+              run: |
+                  LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+                  echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
-      - name: Compile TypeScript
-        run: |
-         cd src/format-check
-         tsc
+                  IFS='.' read -ra VERSION_PARTS <<< "$LATEST_TAG"
+                  MAJOR=${VERSION_PARTS[0]}
+                  MINOR=${VERSION_PARTS[1]}
+                  PATCH=${VERSION_PARTS[2]}
 
-      - name: Publish to Azure DevOps Marketplace
-        id: publish
-        run: |
-          cd src
-          tfx extension publish --manifest-globs vss-extension.json --token "${{ secrets.AZURE_DEVOPS_PAT }}" --override "{\"version\": \"${{ env.VERSION }}\"}"
+                  NEXT_MINOR=$((MINOR + 1))
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ env.VERSION }}
-          draft: ${{ startsWith(github.ref, 'refs/tags/v') == false }}
-          prerelease: ${{ startsWith(github.ref, 'refs/tags/v') == false }}
+                  NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.${PATCH}"
+                  echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
+
+                  EXT_VERSION="${NEXT_VERSION}-dev.${{ github.run_id }}"
+                  echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
+
+            - name: Restore npm packages
+              run: npm ci
+              working-directory: src/format-check
+
+            - name: Update task version
+              run: node ../../.github/workflows/update-task-version.js ${{ env.EXT_VERSION }} task.json
+              working-directory: src/format-check
+
+            - name: Compile TypeScript
+              run: tsc
+              working-directory: src/format-check
+
+            - name: Package Extension
+              run: tfx extension create --manifests vss-extension.json --extension-version ${{ env.EXT_VERSION }}
+              working-directory: src
+
+            - name: Publish to Azure DevOps Marketplace
+              id: publish
+              env:
+                  PUBLISHER_TOKEN: ${{ secrets.AZURE_DEVOPS_PAT }}
+              run: echo $PUBLISHER_TOKEN | tfx extension publish --vsix ajeckmans.format-check.${{ env.EXT_VERSION }}.vsix --token
+              working-directory: src
+
+            - name: Create GitHub Release
+              id: create_release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ github.ref }}
+                  release_name: ${{ github.event_name == 'pull_request' && 'Prerelease' || 'Release' }} ${{ env.EXT_VERSION }}
+                  draft: ${{ github.event_name == 'pull_request' }}
+                  prerelease: ${{ github.event_name == 'pull_request' }}
+
+            - name: Upload .VSIX to GitHub Release
+              uses: actions/upload-release-asset@v1
+              if: startsWith(github.ref, 'refs/tags/v')
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: ./src/ajeckmans.format-check.${{ env.EXT_VERSION }}.vsix
+                  asset_name: ajeckmans.format-check.${{ env.EXT_VERSION }}.vsix
+                  asset_content_type: application/octet-stream
