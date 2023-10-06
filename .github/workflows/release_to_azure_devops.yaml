@@ -67,14 +67,14 @@ jobs:
 
             - name: Package Extension
               run: |
-                tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
-              working-directory: src
+                  tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
+              working-directory: src+
 
             - name: Publish to Azure DevOps Marketplace
               id: publish
               env:
                   PUBLISHER_TOKEN: ${{ secrets.AZURE_DEVOPS_PAT }}
-              run: echo $PUBLISHER_TOKEN | tfx extension publish --vsix ajeckmans.format-check.${{ env.EXT_VERSION }}.vsix --token
+              run: echo $PUBLISHER_TOKEN | tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token
               working-directory: src
 
             - name: Create GitHub Release
@@ -95,6 +95,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./src/ajeckmans.format-check.${{ env.EXT_VERSION }}.vsix
+                  asset_path: ./src/ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix
                   asset_name: ajeckmans.format-check.${{ env.EXT_VERSION }}.vsix
                   asset_content_type: application/octet-stream
