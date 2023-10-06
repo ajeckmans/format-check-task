@@ -10,7 +10,12 @@
         }
     ],
     "public": true,
-    "description": "This task uses 'dotnet format' to validate coding standards in your files. Any detected issues will be annotated in the respective PR files. Essential for maintaining clean and standard compliant code in Azure Repos and Pipelines.",
+    "description": "This task uses 'dotnet format' for code compliance validation.",
+    "summary": "The task identifies coding standard issues in PR files using 'dotnet format'. It is vital for maintaining clean and standard compliant code in Azure Repos and Pipelines.",
+    "repository": {
+        "type": "git",
+        "uri": "https://github.com/ajeckmans/format-check-task"
+    },
     "categories": ["Azure Repos", "Azure Pipelines"],
     "icons": {
         "default": "images/my-icon.png"
