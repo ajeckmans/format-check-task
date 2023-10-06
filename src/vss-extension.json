@@ -20,6 +20,11 @@
     "icons": {
         "default": "images/my-icon.png"
     },
+    "content": {
+        "details": {
+            "path": "overview.md"
+        }
+    },
     "files": [
         {
             "path": "format-check/node_modules",

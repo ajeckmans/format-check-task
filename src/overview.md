@@ -1,0 +1,1 @@
+This extension is designed to validate your code formatting using dotnet format, ensuring that it's up to standard. If it encounters any formatting discrepancies, these issues are conveniently flagged and listed in a comment on your PR. To maintain a clean codebase, consider leveraging this tool before proceeding with the installation of any extensions.
