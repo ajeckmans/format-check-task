@@ -50,7 +50,7 @@ jobs:
                   NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.${PATCH}"
                   echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
 
-                  EXT_VERSION="${NEXT_VERSION}-dev.${{ github.run_id }}"
+                  EXT_VERSION="${MAJOR}.${NEXT_MINOR}.${PATCH}.${GITHUB_RUN_ID}"
                   echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
 
             - name: Restore npm packages
