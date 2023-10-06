@@ -35,6 +35,8 @@ jobs:
             - name: Set version (PR)
               if: github.event_name == 'pull_request'
               run: |
+                  git fetch --tags
+
                   LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
                   echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
