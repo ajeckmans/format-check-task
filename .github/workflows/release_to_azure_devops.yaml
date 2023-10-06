@@ -72,9 +72,7 @@ jobs:
 
             - name: Publish to Azure DevOps Marketplace
               id: publish
-              env:
-                  PUBLISHER_TOKEN: ${{ secrets.AZURE_DEVOPS_PAT }}
-              run: echo $PUBLISHER_TOKEN | tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token
+              run: tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{secrets.AZURE_DEVOPS_PAT}}
               working-directory: src
 
             - name: Create GitHub Release
