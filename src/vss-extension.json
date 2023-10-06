@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "format-check",
-    "name": "Format Check",
+    "name": "Format Check dotnet",
     "version": "1.0.0",
     "publisher": "ajeckmans",
     "targets": [
@@ -9,7 +9,8 @@
             "id": "Microsoft.VisualStudio.Services"
         }
     ],
-    "description": "This is a custom task designed to check and ensure the correct formatting of your code files.",
+    "public": true,
+    "description": "This task uses 'dotnet format' to validate coding standards in your files. Any detected issues will be annotated in the respective PR files. Essential for maintaining clean and standard compliant code in Azure Repos and Pipelines.",
     "categories": ["Azure Repos", "Azure Pipelines"],
     "icons": {
         "default": "images/my-icon.png"
