@@ -9,7 +9,9 @@
         "Node10": {
             "target": "scripts/format-check.js",
             "inputs": {
-                "solutionPath": "INPUT_SOLUTIONPATH"
+                "solutionPath": "INPUT_SOLUTIONPATH",
+                "includePath": "INPUT_INCLUDEPATH",
+                "excludePath": "INPUT_EXCLUDEPATH"
             }
         }
     },
@@ -21,6 +23,22 @@
             "defaultValue": "",
             "required": true,
             "helpMarkDown": "Specify the path to the solution directory."
+        },
+        {
+            "name": "IncludePath",
+            "type": "string",
+            "label": "Include Path",
+            "defaultValue": "",
+            "required": false,
+            "helpMarkDown": "Specify the path to be included."
+        },
+        {
+            "name": "ExcludePath",
+            "type": "string",
+            "label": "Exclude Path",
+            "defaultValue": "",
+            "required": false,
+            "helpMarkDown": "Specify the path to be excluded."
         }
     ]
 }

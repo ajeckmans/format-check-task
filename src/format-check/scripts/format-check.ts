@@ -6,6 +6,8 @@ import * as gi from "azure-devops-node-api/interfaces/GitInterfaces"
 
 import {FormatReports} from './format-report.interface';
 
+const commentPreamble = '[DotNetFormatTask][Automated]';
+
 async function main() {
     // Loading environment variables
     dotenv.config();
@@ -19,6 +21,10 @@ async function main() {
 
     // Task parameters
     const solutionPath = process.env.INPUT_SOLUTIONPATH;
+    const includePath = process.env.INPUT_INCLUDEPATH;
+    const excludePath = process.env.INPUT_EXCLUDEPATH;
+
+    // Ennvironment variables
     const orgUrl = process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI;
     const repoId = process.env.BUILD_REPOSITORY_ID;
     const projectId = process.env.SYSTEM_TEAMPROJECTID;
@@ -48,15 +54,23 @@ async function main() {
 
     try {
         // Run dotnet format with verbosity and reporting
-        const formatCmd = `dotnet format ${solutionPath} --verify-no-changes --verbosity diagnostic --report ${reportPath}`;
+        const formatCmd = `dotnet format ${solutionPath} --verify-no-changes --verbosity diagnostic --report ${reportPath} ${includePath ? `--include ${includePath}` : ''} ${excludePath ? `--exclude ${excludePath}` : ''}`;
         console.log(`Running dotnet format command. (${formatCmd})`);
 
         const dotnetFormatVersion = execSync("dotnet format --version", {encoding: 'utf8'});
         console.log(`using dotnet format version ${dotnetFormatVersion}`);
 
         try {
-            execSync(formatCmd);
-        } catch (e) {
+            execSync(formatCmd, {stdio: 'inherit'});
+        } catch (error) {
+            // The dotnet format command can return a non-zero exit code for both fatal and non-fatal errors.
+            console.error(`Dotnet format command failed with error ${error}`);
+
+            if (!fs.existsSync(reportPath)) {
+                // Format command has failed. No report was generated.
+                console.error("No report found at reportPath.");
+                process.exit(1);
+            }
         }
         console.log("Dotnet format command completed.");
 
@@ -78,7 +92,7 @@ async function main() {
 
         for (const report of reports) {
             for (const change of report.FileChanges) {
-                const content = `[Automated] ${change.DiagnosticId}: ${change.FormatDescription} on line ${change.LineNumber}, position ${change.CharNumber}`;
+                const content = `${commentPreamble} ${change.DiagnosticId}: ${change.FormatDescription} on line ${change.LineNumber}, position ${change.CharNumber}`;
                 activeIssuesContent.push(content);  // Keep track of active issues
                 const existingThread = existingThreads.find(thread => thread.comments.some(comment => comment.content === content));
 
@@ -111,7 +125,7 @@ async function main() {
         }
 
         // Close threads for resolved issues
-        for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content.startsWith('[Automated]')))) {
+        for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content.startsWith(commentPreamble)))) {
             const threadContent = existingThread.comments[0]?.content;
             if (!activeIssuesContent.includes(threadContent)) {
                 console.log("Closing resolved thread.");
@@ -122,11 +136,17 @@ async function main() {
             }
         }
 
-        // Fail the build
-        console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
+        // if formatting errors exist, fail the task
+        if (activeIssuesContent.length) {
+            console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
+        } else {
+            // no formatting errors, task succeeds
+            console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
+        }
+
         console.log("Format check script completed.");
     } catch (error) {
-        console.error(`Dotnet format command failed with error ${error}`);
+        console.error(`Dotnet format task failed with error ${error}`);
         process.exit(1);
     }
 }
