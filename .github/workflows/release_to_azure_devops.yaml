@@ -66,7 +66,8 @@ jobs:
               working-directory: src/format-check
 
             - name: Package Extension
-              run: tfx extension create --manifests vss-extension.json --extension-version ${{ env.EXT_VERSION }}
+              run: |
+                tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
               working-directory: src
 
             - name: Publish to Azure DevOps Marketplace
