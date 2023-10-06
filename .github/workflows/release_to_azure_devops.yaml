@@ -41,7 +41,7 @@ jobs:
                   echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
                   IFS='.' read -ra VERSION_PARTS <<< "$LATEST_TAG"
-                  MAJOR=${VERSION_PARTS[0]}
+                  MAJOR=${VERSION_PARTS[0]#v}
                   MINOR=${VERSION_PARTS[1]}
                   PATCH=${VERSION_PARTS[2]}
 
