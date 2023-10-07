@@ -11,7 +11,10 @@
             "inputs": {
                 "solutionPath": "INPUT_SOLUTIONPATH",
                 "includePath": "INPUT_INCLUDEPATH",
-                "excludePath": "INPUT_EXCLUDEPATH"
+                "excludePath": "INPUT_EXCLUDEPATH",
+                "failOnFormattingErrors": "INPUT_FAILONFORMATTINGERRORS",
+                "statusCheckName": "INPUT_STATUSCHECKNAME",
+                "statusCheckGenre": "INPUT_STATUSCHECKGENRE"
             }
         }
     },
