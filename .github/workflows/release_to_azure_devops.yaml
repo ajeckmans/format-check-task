@@ -68,14 +68,18 @@ jobs:
 
             - name: Package Extension
               run: |
-                  tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
+                  if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                    tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}, \"public\": false}"
+                  else
+                    tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
+                  fi
               working-directory: src
 
             - name: Publish to Azure DevOps Marketplace
               id: publish
               run: |
                   if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-                    tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGANIZATION }} --overrides '{ "public": false }'
+                    tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGANIZATION }}
                   else
                     tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }}
                   fi
