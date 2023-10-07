@@ -83,7 +83,7 @@ jobs:
               id: publish
               run: |
                   if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-                    tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGANIZATION }}
+                    tfx extension publish --vsix ajeckmans.format-check-private-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGANIZATION }}
                   else
                     tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }}
                   fi
