@@ -35,7 +35,7 @@ async function main() {
 
 function getTaskParameters(): TaskParameters {
     return {
-        solutionPath: process.env.INPUT_SOLUTIONPATH,
+        solutionPath: process.env.INPUT_SOLUTIONPATH!,
         includePath: process.env.INPUT_INCLUDEPATH,
         excludePath: process.env.INPUT_EXCLUDEPATH,
         statusCheck: process.env.INPUT_STATUSCHECK === 'true',
