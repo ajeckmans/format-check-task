@@ -69,7 +69,7 @@ jobs:
             - name: Package Extension
               run: |
                   if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-                    tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}, \"public\": false}"
+                    tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\", \"public\": false}"
                   else
                     tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
                   fi
