@@ -100,6 +100,7 @@ function validateSolutionPath(solutionPath: string, reportPath: string) {
 
     if (fs.existsSync(reportPath)) {
         fs.unlinkSync(reportPath);
+        console.log("Successfully deleted the existing report file.");
     }
 }
 
@@ -175,6 +176,7 @@ function getTFSConnection(orgUrl: string, token: string) {
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
     for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content.startsWith(commentPreamble)))) {
+        console.log("Processing the existing thread");
         const threadContent = existingThread.comments[0]?.content;
         if (!activeIssuesContent.includes(threadContent)) {
             console.log("Closing resolved thread.");
@@ -193,6 +195,7 @@ async function setPRStatusAndFailTask(formatIssuesExist: boolean, statusCheck: b
             state: gi.GitStatusState.Failed,
             description: "Formatting errors found"
         };
+        console.log("Attempting to create a Pull Request Status.");
         await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
     }
 
