@@ -47,6 +47,22 @@
             "defaultValue": "true",
             "required": false,
             "helpMarkDown": "If set to false, the task will NOT fail when formatting errors are found."
+        },
+        {
+            "name": "statusCheck",
+            "type": "boolean",
+            "label": "Set PR Status Check",
+            "defaultValue": "false",
+            "required": false,
+            "helpMarkDown": "If set to true, the task will set a status check in the PR when formatting errors are found."
+        },
+        {
+            "name": "statusCheckName",
+            "type": "string",
+            "label": "Status Check Name",
+            "defaultValue": "Code Format",
+            "required": false,
+            "helpMarkDown": "Name of the status check in the PR for formatting errors. This input is only considered if 'Set PR Status Check' is true."
         }
     ]
 }

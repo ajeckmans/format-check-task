@@ -24,13 +24,15 @@ async function main() {
     const includePath = process.env.INPUT_INCLUDEPATH;
     const excludePath = process.env.INPUT_EXCLUDEPATH;
     const failOnFormattingErrors = process.env.INPUT_FAILONFORMATTINGERRORS === 'true';
+    const statusCheck = process.env.INPUT_STATUSCHECK === 'true';
+    const statusCheckName = process.env.INPUT_STATUSCHECKNAME || "Code format";
 
     // Ennvironment variables
     const orgUrl = process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI;
     const repoId = process.env.BUILD_REPOSITORY_ID;
     const projectId = process.env.SYSTEM_TEAMPROJECTID;
 
-    console.log('Solution Path:', solutiYUTnPath);
+    console.log('Solution Path:', solutionPath);
     console.log('Organization URL:', orgUrl);
     console.log('Repo ID:', repoId);
     console.log('Project ID:', projectId);
@@ -138,11 +140,32 @@ async function main() {
         }
 
         // if formatting errors exist, fail the task
-        if (activeIssuesContent.length && failOnFormattingErrors) {
-            console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
+        if (activeIssuesContent.length) {
+            const status: gi.GitPullRequestStatus = {
+                context: {
+                    name: statusCheckName,
+                    genre: "formatting"  // adjust this as needed
+                },
+                state: gi.GitStatusState.Failed,
+                description: "Formatting errors found"
+            };
+
+            if (statusCheck) {
+                try {
+                    let prStatus = await gitApi.createPullRequestStatus(status, repoId, parseInt(pullRequestId));
+                    console.log(`PR status check created with ID: ${prStatus.id}`);
+                } catch (error) {
+                    console.error('Failed to set PR status check:', error);
+                }
+            }
+
+            if (failOnFormattingErrors) {
+                console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
+            } else {
+                console.log("Code format is incorrect.");
+            }
         } else {
-            // no formatting errors, or we're not failing on formatting errors, task succeeds
-    console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
+            console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
         }
 
         console.log("Format check script completed.");
