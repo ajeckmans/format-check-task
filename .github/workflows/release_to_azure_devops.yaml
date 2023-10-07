@@ -66,9 +66,13 @@ jobs:
               run: tsc
               working-directory: src/format-check
 
+                # .. previous steps
+
             - name: Package Extension
               run: |
                   if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                    sed -i 's/"id": "format-check"/"id": "format-check-private"/g' vss-extension.json
+                    sed -i 's/"name": "Format Check dotnet"/"name": "Format Check dotnet (Private Test Version)"/g' vss-extension.json
                     tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\", \"public\": false}"
                   else
                     tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
