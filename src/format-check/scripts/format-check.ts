@@ -22,19 +22,19 @@ async function main() {
     }
 
     // Task parameters
-    const taskParams = getTaskParameters();
     const envVars = getEnvVariables();
+    const taskParams = getTaskParameters(envVars);
 
     // Run the format check
     const reports = runFormatCheck(taskParams);
 
     // Check the format and set PR according to the result
-    await checkFormatAndSetPR(reports, envVars, taskParams.statusCheck, taskParams.failOnFormattingErrors, taskParams.statusCheckContext);
+    await checkFormatAndSetPR(reports, envVars, taskParams.token, taskParams.statusCheck, taskParams.failOnFormattingErrors, taskParams.statusCheckContext);
 }
 
 
-function getTaskParameters(): TaskParameters {
-    let params =  {
+function getTaskParameters(envVars: EnvVariables): TaskParameters {
+    let params = {
         solutionPath: process.env.INPUT_SOLUTIONPATH!,
         includePath: process.env.INPUT_INCLUDEPATH,
         excludePath: process.env.INPUT_EXCLUDEPATH,
@@ -43,7 +43,8 @@ function getTaskParameters(): TaskParameters {
         statusCheckContext: {
             name: process.env.INPUT_STATUSCHECKNAME,
             genre: process.env.INPUT_STATUSCHECKGENRE,
-        }
+        },
+        token: process.env.INPUT_PAT || envVars.token
     };
 
     console.log('task input parameters:')
@@ -129,9 +130,9 @@ function loadErrorReport(reportPath: string) {
     return JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
 }
 
-async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables, statusCheck: boolean, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
+async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables, token: string, statusCheck: boolean, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
     console.log("Creating personal access token handler.");
-    const authHandler = azdev.getPersonalAccessTokenHandler(envVars.token);
+    const authHandler = azdev.getPersonalAccessTokenHandler(token);
 
     console.log("Creating TFS connection.");
     const connection = new azdev.WebApi(envVars.orgUrl, authHandler);

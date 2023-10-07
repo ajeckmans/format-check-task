@@ -1,5 +1,5 @@
 export interface TaskParameters {
-    solutionPath: string | undefined;
+    solutionPath: string;
     includePath: string | undefined;
     excludePath: string | undefined;
     statusCheck: boolean;
@@ -8,4 +8,5 @@ export interface TaskParameters {
         name: string;
         genre: string;
     };
+    token: string | undefined;
 }
