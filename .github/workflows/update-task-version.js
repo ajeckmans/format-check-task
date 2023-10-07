@@ -15,7 +15,7 @@ const version = semver.split('.')
 taskJson.version = {
     Major: version[0],
     Minor: version[1],
-    Patch: version[2]
+    Patch: version[2].concat(version[3])
 };
 
 fs.writeFileSync(taskJsonPath, JSON.stringify(taskJson, null, 2), 'utf-8');
