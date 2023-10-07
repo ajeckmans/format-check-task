@@ -70,7 +70,7 @@
             "label": "Status Check Genre",
             "defaultValue": "formatting",
             "required": false,
-            "helpMarkDown": "Genre of the status check in the PR for formatting errors. This input is only considered if 'Set PR Status Check' is true."F   
+            "helpMarkDown": "Genre of the status check in the PR for formatting errors. This input is only considered if 'Set PR Status Check' is true."   
         }
     ]
 }
