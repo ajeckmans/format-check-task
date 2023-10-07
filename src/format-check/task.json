@@ -60,9 +60,17 @@
             "name": "statusCheckName",
             "type": "string",
             "label": "Status Check Name",
-            "defaultValue": "Code Format",
+            "defaultValue": "format check",
             "required": false,
             "helpMarkDown": "Name of the status check in the PR for formatting errors. This input is only considered if 'Set PR Status Check' is true."
+        },
+        {
+            "name": "statusCheckGenre",
+            "type": "string",
+            "label": "Status Check Genre",
+            "defaultValue": "formatting",
+            "required": false,
+            "helpMarkDown": "Genre of the status check in the PR for formatting errors. This input is only considered if 'Set PR Status Check' is true."F   
         }
     ]
 }

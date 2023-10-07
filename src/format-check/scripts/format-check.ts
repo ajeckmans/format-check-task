@@ -41,8 +41,8 @@ function getTaskParameters(): TaskParameters {
         statusCheck: process.env.INPUT_STATUSCHECK === 'true',
         failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS === 'true',
         statusCheckContext: {
-            name: process.env.INPUT_STATUSCHECKNAME || "Code format",
-            genre: process.env.INPUT_STATUSCHECKGENRE || "YOUR_DEFAULT_GENRE",
+            name: process.env.INPUT_STATUSCHECKNAME,
+            genre: process.env.INPUT_STATUSCHECKGENRE,
         }
     };
 }
