@@ -119,11 +119,17 @@ function loadErrorReport(reportPath: string) {
 }
 
 async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables, statusCheck: boolean, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
-    console.log("Fetching existing threads.");
-    const tfsConnection = getTFSConnection(envVars.orgUrl, envVars.token);
-    const gitApi = await tfsConnection.getGitApi();
-    const existingThreads = await gitApi.getThreads(envVars.repoId, envVars.pullRequestId, envVars.projectId);
+    console.log("Creating personal access token handler.");
+    const authHandler = azdev.getPersonalAccessTokenHandler(envVars.token);
 
+    console.log("Creating TFS connection.");
+    const tfsConnection = new azdev.WebApi(envVars.orgUrl, authHandler);
+
+    console.log("Getting Git API.");
+    const gitApi = await tfsConnection.getGitApi();
+
+    console.log("Fetching existing threads.");
+    const existingThreads = await gitApi.getThreads(envVars.repoId, envVars.pullRequestId, envVars.projectId);
     console.log("Completed fetching existing threads.");
 
     let activeIssuesContent: string[] = [];
@@ -167,11 +173,6 @@ async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables
 
     // Set PR status and fail the task if necessary
     await setPRStatusAndFailTask(activeIssuesContent.length > 0, statusCheck, gitApi, envVars, failOnFormattingErrors, statusCheckContext);
-}
-
-function getTFSConnection(orgUrl: string, token: string) {
-    const authHandler = azdev.getPersonalAccessTokenHandler(token);
-    return new azdev.WebApi(orgUrl, authHandler);
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
