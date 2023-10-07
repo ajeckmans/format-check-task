@@ -34,7 +34,7 @@ async function main() {
 
 
 function getTaskParameters(): TaskParameters {
-    return {
+    let params =  {
         solutionPath: process.env.INPUT_SOLUTIONPATH!,
         includePath: process.env.INPUT_INCLUDEPATH,
         excludePath: process.env.INPUT_EXCLUDEPATH,
@@ -45,6 +45,17 @@ function getTaskParameters(): TaskParameters {
             genre: process.env.INPUT_STATUSCHECKGENRE,
         }
     };
+
+    console.log('task input parameters:')
+    console.log(`Solution Path: ${params.solutionPath}`);
+    console.log(`Include Path: ${params.includePath}`);
+    console.log(`Exclude Path: ${params.excludePath}`);
+    console.log(`Status Check: ${params.statusCheck}`);
+    console.log(`Fail On Formatting Errors: ${params.failOnFormattingErrors}`);
+    console.log(`Status Check Name: ${params.statusCheckContext.name}`);
+    console.log(`Status Check Genre: ${params.statusCheckContext.genre}`);
+
+    return params;
 }
 
 function getEnvVariables(): EnvVariables {
@@ -123,10 +134,10 @@ async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables
     const authHandler = azdev.getPersonalAccessTokenHandler(envVars.token);
 
     console.log("Creating TFS connection.");
-    const tfsConnection = new azdev.WebApi(envVars.orgUrl, authHandler);
+    const connection = new azdev.WebApi(envVars.orgUrl, authHandler);
 
     console.log("Getting Git API.");
-    const gitApi = await tfsConnection.getGitApi();
+    const gitApi = await connection.getGitApi();
 
     console.log("Fetching existing threads.");
     const existingThreads = await gitApi.getThreads(envVars.repoId, envVars.pullRequestId, envVars.projectId);
