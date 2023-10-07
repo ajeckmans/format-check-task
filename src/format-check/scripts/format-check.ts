@@ -48,12 +48,13 @@ function getTaskParameters(): TaskParameters {
 }
 
 function getEnvVariables(): EnvVariables {
+    const pullRequestId = parseInt(process.env.SYSTEM_PULLREQUEST_PULLREQUESTID!, 10);
     return {
-        orgUrl: process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI,
-        repoId: process.env.BUILD_REPOSITORY_ID,
-        projectId: process.env.SYSTEM_TEAMPROJECTID,
-        pullRequestId: process.env.SYSTEM_PULLREQUEST_PULLREQUESTID ? parseInt(process.env.SYSTEM_PULLREQUEST_PULLREQUESTID) : undefined,
-        token: process.env.SYSTEM_ACCESSTOKEN
+        orgUrl: process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI!,
+        repoId: process.env.BUILD_REPOSITORY_ID!,
+        projectId: process.env.SYSTEM_TEAMPROJECTID!,
+        pullRequestId: isNaN(pullRequestId) ? process.exit(1) : pullRequestId,
+        token: process.env.SYSTEM_ACCESSTOKEN!
     };
 }
 
@@ -203,4 +204,7 @@ async function setPRStatusAndFailTask(formatIssuesExist: boolean, statusCheck: b
 }
 
 // Call these functions in your main function and do your own error handling
-main().catch(error => console.error(error));
+main().catch(error => {
+    console.error(error);
+    process.exit(1);
+});
