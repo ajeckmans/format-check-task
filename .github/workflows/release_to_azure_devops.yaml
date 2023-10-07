@@ -73,7 +73,12 @@ jobs:
 
             - name: Publish to Azure DevOps Marketplace
               id: publish
-              run: tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{secrets.AZURE_DEVOPS_PAT}}
+              run: |
+                  if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                    tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGANIZATION }}
+                  else
+                    tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }}
+                  fi
               working-directory: src
 
             - name: Create GitHub Release
