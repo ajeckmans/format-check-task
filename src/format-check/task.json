@@ -39,6 +39,14 @@
             "defaultValue": "",
             "required": false,
             "helpMarkDown": "Specify the path to be excluded."
+        },
+        {
+            "name": "failOnFormattingErrors",
+            "type": "boolean",
+            "label": "Fail on Formatting Errors",
+            "defaultValue": "true",
+            "required": false,
+            "helpMarkDown": "If set to false, the task will NOT fail when formatting errors are found."
         }
     ]
 }

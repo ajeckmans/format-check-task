@@ -23,13 +23,14 @@ async function main() {
     const solutionPath = process.env.INPUT_SOLUTIONPATH;
     const includePath = process.env.INPUT_INCLUDEPATH;
     const excludePath = process.env.INPUT_EXCLUDEPATH;
+    const failOnFormattingErrors = process.env.INPUT_FAILONFORMATTINGERRORS === 'true';
 
     // Ennvironment variables
     const orgUrl = process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI;
     const repoId = process.env.BUILD_REPOSITORY_ID;
     const projectId = process.env.SYSTEM_TEAMPROJECTID;
 
-    console.log('Solution Path:', solutionPath);
+    console.log('Solution Path:', solutiYUTnPath);
     console.log('Organization URL:', orgUrl);
     console.log('Repo ID:', repoId);
     console.log('Project ID:', projectId);
@@ -137,11 +138,11 @@ async function main() {
         }
 
         // if formatting errors exist, fail the task
-        if (activeIssuesContent.length) {
+        if (activeIssuesContent.length && failOnFormattingErrors) {
             console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
         } else {
-            // no formatting errors, task succeeds
-            console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
+            // no formatting errors, or we're not failing on formatting errors, task succeeds
+    console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
         }
 
         console.log("Format check script completed.");
