@@ -91,6 +91,7 @@ jobs:
 
             - name: Create GitHub Release
               id: create_release
+              if: github.event_name != 'pull_request'
               uses: actions/create-release@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,12 +101,4 @@ jobs:
                   draft: ${{ github.event_name == 'pull_request' }}
                   prerelease: ${{ github.event_name == 'pull_request' }}
 
-            - name: Upload .VSIX to GitHub Release
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./src/ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix
-                  asset_name: ajeckmans.format-check.${{ env.EXT_VERSION }}.vsix
-                  asset_content_type: application/octet-stream
+
