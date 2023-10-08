@@ -9,6 +9,13 @@
             "id": "Microsoft.VisualStudio.Services"
         }
     ],
+    "scopes": [
+        "vso.code_status",
+        "vso.threads_full"
+    ],
+    "demands": [
+        "api-version/7.1"
+    ],
     "public": true,
     "description": "This task uses 'dotnet format' for code compliance validation.",
     "summary": "The task identifies coding standard issues in PR files using 'dotnet format'. It is vital for maintaining clean and standard compliant code in Azure Repos and Pipelines.",
