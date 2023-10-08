@@ -25,13 +25,34 @@ async function main() {
     const envVars = getEnvVariables();
     const taskParams = getTaskParameters(envVars);
 
+    const gitApi = await getGitAPI(taskParams, envVars);
+
+    if (taskParams.statusCheck) {
+        const status: gi.GitPullRequestStatus = {
+            context: taskParams.statusCheckContext,
+            state: gi.GitStatusState.Pending,
+            description: "Format check is running"
+        };
+        await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
+    }
+
     // Run the format check
     const reports = runFormatCheck(taskParams);
 
     // Check the format and set PR according to the result
-    await checkFormatAndSetPR(reports, envVars, taskParams.token, taskParams.statusCheck, taskParams.failOnFormattingErrors, taskParams.statusCheckContext);
+    await checkFormatAndSetPR(gitApi, reports, envVars, taskParams.statusCheck, taskParams.failOnFormattingErrors, taskParams.statusCheckContext);
 }
 
+async function getGitAPI(taskParams: TaskParameters, envVars: EnvVariables) {
+    console.log("Creating personal access token handler.");
+    const authHandler = azdev.getPersonalAccessTokenHandler(taskParams.token);
+
+    console.log("Creating TFS connection.");
+    const connection = new azdev.WebApi(envVars.orgUrl, authHandler);
+
+    console.log("Getting Git API.");
+    return await connection.getGitApi();
+}
 
 function getTaskParameters(envVars: EnvVariables): TaskParameters {
     let params = {
@@ -137,16 +158,7 @@ function loadErrorReport(reportPath: string) {
     return JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
 }
 
-async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables, token: string, statusCheck: boolean, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
-    console.log("Creating personal access token handler.");
-    const authHandler = azdev.getPersonalAccessTokenHandler(token);
-
-    console.log("Creating TFS connection.");
-    const connection = new azdev.WebApi(envVars.orgUrl, authHandler);
-
-    console.log("Getting Git API.");
-    const gitApi = await connection.getGitApi();
-
+async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envVars: EnvVariables, statusCheck: boolean, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
     console.log("Fetching existing threads.");
     const existingThreads = await gitApi.getThreads(envVars.repoId, envVars.pullRequestId, envVars.projectId);
     console.log("Completed fetching existing threads.");
@@ -209,20 +221,30 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
 }
 
 async function setPRStatusAndFailTask(formatIssuesExist: boolean, statusCheck: boolean, gitApi: IGitApi, envVars: EnvVariables, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
-    if (formatIssuesExist && statusCheck) {
-        const status: gi.GitPullRequestStatus = {
-            context: statusCheckContext,
-            state: gi.GitStatusState.Failed,
-            description: "Formatting errors found"
-        };
-        console.log("Attempting to create a Pull Request Status.");
-        await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
-    }
-
     if (formatIssuesExist && failOnFormattingErrors) {
         console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
     } else {
         console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
+    }
+
+    if (statusCheck) {
+        if (formatIssuesExist) {
+            const status: gi.GitPullRequestStatus = {
+                context: statusCheckContext,
+                state: gi.GitStatusState.Failed,
+                description: "Formatting errors found"
+            };
+            console.log("Attempting to create a Pull Request Status.");
+            await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
+        } else {
+            const status: gi.GitPullRequestStatus = {
+                context: statusCheckContext,
+                state: gi.GitStatusState.Succeeded,
+                description: "No formatting errors found"
+            };
+            console.log("Attempting to create a Pull Request Status.");
+            await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
+        }
     }
 }
 
