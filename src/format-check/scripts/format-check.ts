@@ -61,13 +61,20 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
 
 function getEnvVariables(): EnvVariables {
     const pullRequestId = parseInt(process.env.SYSTEM_PULLREQUEST_PULLREQUESTID!, 10);
-    return {
+    let envVars = {
         orgUrl: process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI!,
         repoId: process.env.BUILD_REPOSITORY_ID!,
         projectId: process.env.SYSTEM_TEAMPROJECTID!,
         pullRequestId: isNaN(pullRequestId) ? process.exit(1) : pullRequestId,
         token: process.env.SYSTEM_ACCESSTOKEN!
     };
+
+    console.log(`OrgUrl: ${envVars.orgUrl}`);
+    console.log(`RepoId: ${envVars.repoId}`);
+    console.log(`ProjectId: ${envVars.projectId}`);
+    console.log(`PullRequestId: ${envVars.pullRequestId}`);
+
+    return envVars;
 }
 
 function runFormatCheck(taskParams: TaskParameters) {
