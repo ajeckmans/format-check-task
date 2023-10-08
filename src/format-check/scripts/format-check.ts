@@ -28,19 +28,14 @@ async function main() {
     const gitApi = await getGitAPI(taskParams, envVars);
 
     if (taskParams.statusCheck) {
-        const status: gi.GitPullRequestStatus = {
-            context: taskParams.statusCheckContext,
-            state: gi.GitStatusState.Pending,
-            description: "Format check is running"
-        };
-        await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
+        await updatePullRequestStatus(gitApi, envVars, taskParams, gi.GitStatusState.Pending);
     }
 
     // Run the format check
     const reports = runFormatCheck(taskParams);
 
     // Check the format and set PR according to the result
-    await checkFormatAndSetPR(gitApi, reports, envVars, taskParams.statusCheck, taskParams.failOnFormattingErrors, taskParams.statusCheckContext);
+    await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
 }
 
 async function getGitAPI(taskParams: TaskParameters, envVars: EnvVariables) {
@@ -158,7 +153,7 @@ function loadErrorReport(reportPath: string) {
     return JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
 }
 
-async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envVars: EnvVariables, statusCheck: boolean, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
+async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envVars: EnvVariables, taskParams: TaskParameters) {
     console.log("Fetching existing threads.");
     const existingThreads = await gitApi.getThreads(envVars.repoId, envVars.pullRequestId, envVars.projectId);
     console.log("Completed fetching existing threads.");
@@ -203,7 +198,7 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
     await markResolvedThreadsAsClosed(existingThreads, activeIssuesContent, gitApi, envVars);
 
     // Set PR status and fail the task if necessary
-    await setPRStatusAndFailTask(activeIssuesContent.length > 0, statusCheck, gitApi, envVars, failOnFormattingErrors, statusCheckContext);
+    await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
@@ -220,32 +215,39 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
     }
 }
 
-async function setPRStatusAndFailTask(formatIssuesExist: boolean, statusCheck: boolean, gitApi: IGitApi, envVars: EnvVariables, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
-    if (formatIssuesExist && failOnFormattingErrors) {
-        console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
-    } else {
-        console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
-    }
+async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
+    const taskResult = formatIssuesExist ? "Failed" : "Succeeded";
+    const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
+    const gitStatusState = formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
 
-    if (statusCheck) {
-        if (formatIssuesExist) {
-            const status: gi.GitPullRequestStatus = {
-                context: statusCheckContext,
-                state: gi.GitStatusState.Failed,
-                description: "Formatting errors found"
-            };
-            console.log("Attempting to create a Pull Request Status.");
-            await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
-        } else {
-            const status: gi.GitPullRequestStatus = {
-                context: statusCheckContext,
-                state: gi.GitStatusState.Succeeded,
-                description: "No formatting errors found"
-            };
-            console.log("Attempting to create a Pull Request Status.");
-            await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
-        }
+    console.log(`##vso[task.complete result=${taskResult};]${taskMessage}`);
+    if (taskParams.statusCheck) {
+        await updatePullRequestStatus(gitApi, envVars, taskParams, gitStatusState);
     }
+}
+
+
+function getStatusDescription(status: gi.GitStatusState): string {
+    switch (status) {
+        case gi.GitStatusState.Pending:
+            return "Format check is running";
+        case gi.GitStatusState.Error:
+            return "Formatting errors found";
+        default:
+            return "No formatting errors found";
+    }
+}
+
+async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters, status: gi.GitStatusState) {
+    const pullRequest = await gitApi.getPullRequestById(envVars.pullRequestId);
+    const iterationId = parseInt(pullRequest.lastMergeSourceCommit.commitId, 10);
+    const prStatus: gi.GitPullRequestStatus = {
+        context: taskParams.statusCheckContext,
+        state: status,
+        description: getStatusDescription(status),
+        iterationId: iterationId,
+    };
+    await gitApi.createPullRequestStatus(prStatus, envVars.repoId, envVars.pullRequestId);
 }
 
 // Call these functions in your main function and do your own error handling
