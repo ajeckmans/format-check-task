@@ -13,7 +13,7 @@ const taskJson = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'));
 
 const version = semver.split('.')
 
-const patchVersion = version[3] ? "" + (version[2] * 214748 ) + version[3] : version[2];
+const patchVersion = version[3] ? "" + (version[2] * 214748) + version[3] : version[2];
 taskJson.version = {
     Major: version[0],
     Minor: version[1],
