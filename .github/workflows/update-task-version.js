@@ -12,10 +12,12 @@ const taskJsonPath = path.resolve(process.argv[3]);
 const taskJson = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'));
 
 const version = semver.split('.')
+
+const combinedVersion = "" + (version[2] * 214748 ) + version[3];
 taskJson.version = {
     Major: version[0],
     Minor: version[1],
-    Patch: version[2]
+    Patch: combinedVersion
 };
 
 fs.writeFileSync(taskJsonPath, JSON.stringify(taskJson, null, 2), 'utf-8');

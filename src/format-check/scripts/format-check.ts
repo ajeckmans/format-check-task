@@ -8,6 +8,7 @@ import {EnvVariables} from './EnvVariables';
 
 import {FormatReports} from './format-report.interface';
 import {IGitApi} from "azure-devops-node-api/GitApi";
+import {GitPullRequestIteration} from "azure-devops-node-api/interfaces/GitInterfaces";
 
 const commentPreamble = '[DotNetFormatTask][Automated]';
 
@@ -22,39 +23,75 @@ async function main() {
     }
 
     // Task parameters
-    const taskParams = getTaskParameters();
     const envVars = getEnvVariables();
+    const taskParams = getTaskParameters(envVars);
+
+    const gitApi = await getGitAPI(taskParams, envVars);
+
+    if (taskParams.statusCheck) {
+        await updatePullRequestStatus(gitApi, envVars, taskParams, gi.GitStatusState.Pending);
+    }
 
     // Run the format check
     const reports = runFormatCheck(taskParams);
 
     // Check the format and set PR according to the result
-    await checkFormatAndSetPR(reports, envVars, taskParams.statusCheck, taskParams.failOnFormattingErrors, taskParams.statusCheckContext);
+    await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
 }
 
+async function getGitAPI(taskParams: TaskParameters, envVars: EnvVariables) {
+    console.log("Creating personal access token handler.");
+    const authHandler = azdev.getPersonalAccessTokenHandler(taskParams.token);
 
-function getTaskParameters(): TaskParameters {
-    return {
-        solutionPath: process.env.INPUT_SOLUTIONPATH,
+    console.log("Creating TFS connection.");
+    const connection = new azdev.WebApi(envVars.orgUrl, authHandler);
+
+    console.log("Getting Git API.");
+    return await connection.getGitApi();
+}
+
+function getTaskParameters(envVars: EnvVariables): TaskParameters {
+    let params = {
+        solutionPath: process.env.INPUT_SOLUTIONPATH!,
         includePath: process.env.INPUT_INCLUDEPATH,
         excludePath: process.env.INPUT_EXCLUDEPATH,
         statusCheck: process.env.INPUT_STATUSCHECK === 'true',
         failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS === 'true',
         statusCheckContext: {
-            name: process.env.INPUT_STATUSCHECKNAME || "Code format",
-            genre: process.env.INPUT_STATUSCHECKGENRE || "YOUR_DEFAULT_GENRE",
-        }
+            name: process.env.INPUT_STATUSCHECKNAME,
+            genre: process.env.INPUT_STATUSCHECKGENRE,
+        },
+        token: process.env.INPUT_PAT || envVars.token
     };
+
+    console.log('task input parameters:')
+    console.log(`Solution Path: ${params.solutionPath}`);
+    console.log(`Include Path: ${params.includePath}`);
+    console.log(`Exclude Path: ${params.excludePath}`);
+    console.log(`Status Check: ${params.statusCheck}`);
+    console.log(`Fail On Formatting Errors: ${params.failOnFormattingErrors}`);
+    console.log(`Status Check Name: ${params.statusCheckContext.name}`);
+    console.log(`Status Check Genre: ${params.statusCheckContext.genre}`);
+
+    return params;
 }
 
 function getEnvVariables(): EnvVariables {
-    return {
-        orgUrl: process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI,
-        repoId: process.env.BUILD_REPOSITORY_ID,
-        projectId: process.env.SYSTEM_TEAMPROJECTID,
-        pullRequestId: process.env.SYSTEM_PULLREQUEST_PULLREQUESTID ? parseInt(process.env.SYSTEM_PULLREQUEST_PULLREQUESTID) : undefined,
-        token: process.env.SYSTEM_ACCESSTOKEN
+    const pullRequestId = parseInt(process.env.SYSTEM_PULLREQUEST_PULLREQUESTID!, 10);
+    let envVars = {
+        orgUrl: process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI!,
+        repoId: process.env.BUILD_REPOSITORY_ID!,
+        projectId: process.env.SYSTEM_TEAMPROJECTID!,
+        pullRequestId: isNaN(pullRequestId) ? process.exit(1) : pullRequestId,
+        token: process.env.SYSTEM_ACCESSTOKEN!
     };
+
+    console.log(`OrgUrl: ${envVars.orgUrl}`);
+    console.log(`RepoId: ${envVars.repoId}`);
+    console.log(`ProjectId: ${envVars.projectId}`);
+    console.log(`PullRequestId: ${envVars.pullRequestId}`);
+
+    return envVars;
 }
 
 function runFormatCheck(taskParams: TaskParameters) {
@@ -99,6 +136,7 @@ function validateSolutionPath(solutionPath: string, reportPath: string) {
 
     if (fs.existsSync(reportPath)) {
         fs.unlinkSync(reportPath);
+        console.log("Successfully deleted the existing report file.");
     }
 }
 
@@ -116,12 +154,9 @@ function loadErrorReport(reportPath: string) {
     return JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
 }
 
-async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables, statusCheck: boolean, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
+async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envVars: EnvVariables, taskParams: TaskParameters) {
     console.log("Fetching existing threads.");
-    const tfsConnection = getTFSConnection(envVars.orgUrl, envVars.token);
-    const gitApi = await tfsConnection.getGitApi();
     const existingThreads = await gitApi.getThreads(envVars.repoId, envVars.pullRequestId, envVars.projectId);
-
     console.log("Completed fetching existing threads.");
 
     let activeIssuesContent: string[] = [];
@@ -164,16 +199,12 @@ async function checkFormatAndSetPR(reports: FormatReports, envVars: EnvVariables
     await markResolvedThreadsAsClosed(existingThreads, activeIssuesContent, gitApi, envVars);
 
     // Set PR status and fail the task if necessary
-    await setPRStatusAndFailTask(activeIssuesContent.length > 0, statusCheck, gitApi, envVars, failOnFormattingErrors, statusCheckContext);
-}
-
-function getTFSConnection(orgUrl: string, token: string) {
-    const authHandler = azdev.getPersonalAccessTokenHandler(token);
-    return new azdev.WebApi(orgUrl, authHandler);
+    await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
-    for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content.startsWith(commentPreamble)))) {
+    for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content?.startsWith(commentPreamble)))) {
+        console.log("Processing the existing thread");
         const threadContent = existingThread.comments[0]?.content;
         if (!activeIssuesContent.includes(threadContent)) {
             console.log("Closing resolved thread.");
@@ -185,22 +216,42 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
     }
 }
 
-async function setPRStatusAndFailTask(formatIssuesExist: boolean, statusCheck: boolean, gitApi: IGitApi, envVars: EnvVariables, failOnFormattingErrors: boolean, statusCheckContext: gi.GitStatusContext) {
-    if (formatIssuesExist && statusCheck) {
-        const status: gi.GitPullRequestStatus = {
-            context: statusCheckContext,
-            state: gi.GitStatusState.Failed,
-            description: "Formatting errors found"
-        };
-        await gitApi.createPullRequestStatus(status, envVars.repoId, envVars.pullRequestId);
-    }
+async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
+    const taskResult = formatIssuesExist ? "Failed" : "Succeeded";
+    const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
+    const gitStatusState = formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
 
-    if (formatIssuesExist && failOnFormattingErrors) {
-        console.log("##vso[task.complete result=Failed;]Code format is incorrect.");
-    } else {
-        console.log("##vso[task.complete result=Succeeded;]Code format is correct.");
+    console.log(`##vso[task.complete result=${taskResult};]${taskMessage}`);
+    if (taskParams.statusCheck) {
+        await updatePullRequestStatus(gitApi, envVars, taskParams, gitStatusState);
     }
 }
 
+function getStatusDescription(status: gi.GitStatusState): string {
+    switch (status) {
+        case gi.GitStatusState.Pending:
+            return "Format check is running";
+        case gi.GitStatusState.Error:
+            return "Formatting errors found";
+        default:
+            return "No formatting errors found";
+    }
+}
+
+async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters, status: gi.GitStatusState) {
+    const iterations: GitPullRequestIteration[] = await gitApi.getPullRequestIterations(envVars.repoId, envVars.pullRequestId, envVars.projectId, false);
+    let iterationId = Math.max(...iterations.map(iteration => iteration.id));
+    const prStatus: gi.GitPullRequestStatus = {
+        context: taskParams.statusCheckContext,
+        state: status,
+        description: getStatusDescription(status),
+        iterationId: iterationId,
+    };
+    await gitApi.createPullRequestStatus(prStatus, envVars.repoId, envVars.pullRequestId);
+}
+
 // Call these functions in your main function and do your own error handling
-main().catch(error => console.error(error));
+main().catch(error => {
+    console.error(error);
+    process.exit(1);
+});

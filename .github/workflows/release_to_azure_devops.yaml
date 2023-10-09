@@ -50,7 +50,7 @@ jobs:
                   NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.${PATCH}"
                   echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
 
-                  SHORT_RUN_ID=$((${{ github.run_id }} % 2147483647))
+                  SHORT_RUN_ID=$((${{ github.run_id }} % 214748))
                   EXT_VERSION="${MAJOR}.${MINOR}.${PATCH}.${SHORT_RUN_ID}"
                   echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
 
