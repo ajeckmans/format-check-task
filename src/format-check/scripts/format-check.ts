@@ -36,7 +36,15 @@ async function main() {
     const reports = runFormatCheck(taskParams);
 
     // Check the format and set PR according to the result
-    await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
+    var shouldFail = await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
+
+    if (shouldFail) {
+        console.log("Format check task failed.");
+        process.exit(1);
+    } else {
+        console.log("Format check task succeeded.");
+        process.exit(0);
+    }
 }
 
 async function getGitAPI(taskParams: TaskParameters, envVars: EnvVariables) {
@@ -107,6 +115,7 @@ function runFormatCheck(taskParams: TaskParameters) {
 
         try {
             execSync(formatCmd, {stdio: 'inherit'});
+            execSync(formatCmd, {stdio: 'pipe'});
         } catch (error) {
             handleDotnetFormatError(error, reportPath);
         }
@@ -176,7 +185,8 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
                 console.log("Updating existing thread.");
 
                 const thread = {
-                    status: gi.CommentThreadStatus.Active
+                    status: gi.CommentThreadStatus.Active,
+                    lastUpdatedTime: new Date()
                 };
                 await gitApi.updateThread(thread, envVars.repoId, envVars.pullRequestId, existingThread.id, envVars.projectId);
             } else {
@@ -199,7 +209,8 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
     await markResolvedThreadsAsClosed(existingThreads, activeIssuesContent, gitApi, envVars);
 
     // Set PR status and fail the task if necessary
-    await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
+    var shouldFail = await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
+    return shouldFail;
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
@@ -217,13 +228,16 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
 }
 
 async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
-    const taskResult = formatIssuesExist ? "Failed" : "Succeeded";
-    const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
-    const gitStatusState = formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
-
-    console.log(`##vso[task.complete result=${taskResult};]${taskMessage}`);
     if (taskParams.statusCheck) {
-        await updatePullRequestStatus(gitApi, envVars, taskParams, gitStatusState);
+        await updatePullRequestStatus(gitApi, envVars, taskParams, formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded);
+    }
+
+    if (formatIssuesExist && taskParams.failOnFormattingErrors) {
+        console.log(`##vso[task.complete result=Failed;]Code format is incorrect.`);
+        return true;
+    } else {
+        console.log(`##vso[task.complete result=Succeeded;]Code format is correct.`);
+        return false;
     }
 }
 
@@ -231,14 +245,19 @@ function getStatusDescription(status: gi.GitStatusState): string {
     switch (status) {
         case gi.GitStatusState.Pending:
             return "Format check is running";
-        case gi.GitStatusState.Error:
+        case gi.GitStatusState.Failed:
             return "Formatting errors found";
+        case gi.GitStatusState.Error:
+            return "Formatting task failed with an error.";
         default:
             return "No formatting errors found";
     }
 }
 
 async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters, status: gi.GitStatusState) {
+    const logMsg = `Setting status check '${taskParams.statusCheckContext.genre}\\${taskParams.statusCheckContext.name}' to: ${gi.GitStatusState[status]}`;
+    console.log(logMsg);
+
     const iterations: GitPullRequestIteration[] = await gitApi.getPullRequestIterations(envVars.repoId, envVars.pullRequestId, envVars.projectId, false);
     let iterationId = Math.max(...iterations.map(iteration => iteration.id));
     const prStatus: gi.GitPullRequestStatus = {
