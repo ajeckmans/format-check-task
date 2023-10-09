@@ -237,7 +237,7 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
     await markResolvedThreadsAsClosed(existingThreads, activeIssuesContent, gitApi, envVars);
 
     // Set PR status and fail the task if necessary
-    return await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
+    return await setPRStatusAndFailTask(reports.length > 0, gitApi, envVars, taskParams);
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
