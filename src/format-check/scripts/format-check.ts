@@ -81,7 +81,8 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
     console.log(`Fail On Formatting Errors: ${params.failOnFormattingErrors}`);
     console.log(`Status Check Name: ${params.statusCheckContext.name}`);
     console.log(`Status Check Genre: ${params.statusCheckContext.genre}`);
-
+    console.log(`Scope To Pull Request: ${params.scopeToPullRequest}`);
+    
     return params;
 }
 
