@@ -33,7 +33,7 @@ async function main() {
     }
 
     // Run the format check
-    const reports = runFormatCheck(taskParams);
+    const reports = runFormatxCheck(taskParams);
 
     // Check the format and set PR according to the result
     var shouldFail = await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
@@ -63,8 +63,8 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
         solutionPath: process.env.INPUT_SOLUTIONPATH!,
         includePath: process.env.INPUT_INCLUDEPATH,
         excludePath: process.env.INPUT_EXCLUDEPATH,
-        statusCheck: process.env.INPUT_STATUSCHECK === 'true',
-        failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS === 'true',
+        statusCheck: process.env.INPUT_STATUSCHECK,
+        failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS,
         statusCheckContext: {
             name: process.env.INPUT_STATUSCHECKNAME,
             genre: process.env.INPUT_STATUSCHECKGENRE,
@@ -114,10 +114,8 @@ function runFormatCheck(taskParams: TaskParameters) {
         console.log(`Using dotnet format version ${dotnetFormatVersion}`);
 
         try {
-            const output = execSync(formatCmd, {stdio: 'pipe'});
-            console.log(output.toString());
+            execSync(formatCmd, {stdio: 'inherit'});execSync(formatCmd, {stdio: 'pipe'});
         } catch (error) {
-            console.error(`Error: ${error.stderr.toString()}`);
             handleDotnetFormatError(error, reportPath);
         }
 
