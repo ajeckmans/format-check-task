@@ -1,12 +1,13 @@
 export interface TaskParameters {
-    solutionPath: string;
-    includePath: string | undefined;
     excludePath: string | undefined;
-    statusCheck: boolean;
     failOnFormattingErrors: boolean;
+    includePath: string | undefined;
+    solutionPath: string;
+    scopeToPullRequest: boolean;
+    statusCheck: boolean;
     statusCheckContext: {
-        name: string;
         genre: string;
+        name: string;
     };
     token: string | undefined;
 }
