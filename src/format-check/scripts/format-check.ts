@@ -82,7 +82,7 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
     console.log(`Status Check Name: ${params.statusCheckContext.name}`);
     console.log(`Status Check Genre: ${params.statusCheckContext.genre}`);
     console.log(`Scope To Pull Request: ${params.scopeToPullRequest}`);
-    
+
     return params;
 }
 
@@ -179,6 +179,7 @@ async function getPullRequestFiles(gitApi: IGitApi, envVars: EnvVariables) {
     console.log("Getting the PR commits...");
     const pullRequestCommits = await gitApi.getPullRequestCommits(envVars.repoId, envVars.pullRequestId, envVars.projectId);
     const latestCommit = pullRequestCommits.slice(-1)[0];
+    console.log("latest commit: " + latestCommit.commitId)
 
     const changes = await gitApi.getChanges(envVars.repoId, latestCommit.commitId, envVars.projectId);
     let files = changes.changes
