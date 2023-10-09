@@ -33,7 +33,7 @@ async function main() {
     }
 
     // Run the format check
-    const reports = runFormatxCheck(taskParams);
+    const reports = runFormatCheck(taskParams);
 
     // Check the format and set PR according to the result
     var shouldFail = await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
