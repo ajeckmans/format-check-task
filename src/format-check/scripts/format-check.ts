@@ -185,7 +185,8 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
                 console.log("Updating existing thread.");
 
                 const thread = {
-                    status: gi.CommentThreadStatus.Active
+                    status: gi.CommentThreadStatus.Active,
+                    lastUpdatedTime: new Date()
                 };
                 await gitApi.updateThread(thread, envVars.repoId, envVars.pullRequestId, existingThread.id, envVars.projectId);
             } else {
