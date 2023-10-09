@@ -167,6 +167,7 @@ async function loadErrorReport(gitApi: IGitApi, envVars: EnvVariables, reportPat
     report = report.map(r => ({...r, FilePath: r.FilePath.replace(`${process.env.BUILD_SOURCESDIRECTORY}`, '')}))
 
     if (scopeToPullRequest) {
+        console.log("Scoping to Pull Request.");
         const filesInPR = await getPullRequestFiles(gitApi, envVars);
         report = report.filter(r => filesInPR.includes(r.FilePath));
     }
@@ -175,13 +176,17 @@ async function loadErrorReport(gitApi: IGitApi, envVars: EnvVariables, reportPat
 }
 
 async function getPullRequestFiles(gitApi: IGitApi, envVars: EnvVariables) {
+    console.log("Getting the PR commits...");
     const pullRequestCommits = await gitApi.getPullRequestCommits(envVars.repoId, envVars.pullRequestId, envVars.projectId);
-    const latestCommitId = pullRequestCommits[pullRequestCommits.length - 1].commitId;
+    const latestCommit = pullRequestCommits.slice(-1)[0];
 
-    const changes = await gitApi.getChanges(envVars.repoId, latestCommitId, envVars.projectId);
-    return changes.changes
+    const changes = await gitApi.getChanges(envVars.repoId, latestCommit.commitId, envVars.projectId);
+    let files = changes.changes
         .filter(change => change.changeType !== VersionControlChangeType.Delete)
         .map(change => change.item.path);
+
+    console.log("Commit file changed obtained: ", files);
+    return files;
 }
 
 
