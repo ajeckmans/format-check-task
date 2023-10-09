@@ -245,8 +245,10 @@ function getStatusDescription(status: gi.GitStatusState): string {
     switch (status) {
         case gi.GitStatusState.Pending:
             return "Format check is running";
-        case gi.GitStatusState.Error:
+        case gi.GitStatusState.Failed:
             return "Formatting errors found";
+        case gi.GitStatusState.Error:
+            return "Formatting task failed with an error.";
         default:
             return "No formatting errors found";
     }
