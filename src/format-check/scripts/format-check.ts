@@ -199,7 +199,9 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
     await markResolvedThreadsAsClosed(existingThreads, activeIssuesContent, gitApi, envVars);
 
     // Set PR status and fail the task if necessary
-    await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
+    var shouldFail = await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
+
+    process.exit(shouldFail ? 1 : 0);
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
@@ -216,7 +218,7 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
     }
 }
 
-async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
+async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) : Boolean {
     const taskResult = formatIssuesExist ? "Failed" : "Succeeded";
     const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
     const gitStatusState = formatIssuesExist && taskParams.failOnFormattingErrors ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
@@ -228,6 +230,8 @@ async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitAp
     if (taskParams.statusCheck) {
         await updatePullRequestStatus(gitApi, envVars, taskParams, gitStatusState);
     }
+
+    return formatIssuesExist && taskParams.failOnFormattingErrors;
 }
 
 function getStatusDescription(status: gi.GitStatusState): string {
