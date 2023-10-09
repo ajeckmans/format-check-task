@@ -36,7 +36,15 @@ async function main() {
     const reports = runFormatCheck(taskParams);
 
     // Check the format and set PR according to the result
-    await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
+    var shouldFail = await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
+
+    if(shouldFail){
+        console.log("Format check task failed.");
+        process.exit(1);
+    } else {
+        console.log("Format check task succeeded.");
+        process.exit(0);
+    }
 }
 
 async function getGitAPI(taskParams: TaskParameters, envVars: EnvVariables) {
@@ -106,8 +114,10 @@ function runFormatCheck(taskParams: TaskParameters) {
         console.log(`Using dotnet format version ${dotnetFormatVersion}`);
 
         try {
-            execSync(formatCmd, {stdio: 'inherit'});
+            const output = execSync(formatCmd, {stdio: 'pipe'});
+            console.log(output.toString());
         } catch (error) {
+            console.error(`Error: ${error.stderr.toString()}`);
             handleDotnetFormatError(error, reportPath);
         }
 
@@ -200,8 +210,7 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
 
     // Set PR status and fail the task if necessary
     var shouldFail = await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
-
-    process.exit(shouldFail ? 1 : 0);
+    return shouldFail;
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
@@ -222,9 +231,6 @@ async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitAp
     const taskResult = formatIssuesExist ? "Failed" : "Succeeded";
     const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
     const gitStatusState = formatIssuesExist && taskParams.failOnFormattingErrors ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
-
-    const failMessage = formatIssuesExist && taskParams.failOnFormattingErrors ? "Task will fail due to formatting errors." : "Task will not fail.";
-    console.log(failMessage);
 
     console.log(`##vso[task.complete result=${taskResult};]${taskMessage}`);
     if (taskParams.statusCheck) {
