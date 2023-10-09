@@ -9,13 +9,14 @@
         "Node10": {
             "target": "scripts/format-check.js",
             "inputs": {
-                "solutionPath": "INPUT_SOLUTIONPATH",
-                "includePath": "INPUT_INCLUDEPATH",
-                "excludePath": "INPUT_EXCLUDEPATH",
-                "failOnFormattingErrors": "INPUT_FAILONFORMATTINGERRORS",
-                "statusCheck": "INPUT_STATUSCHECK",
-                "statusCheckName": "INPUT_STATUSCHECKNAME",
-                "statusCheckGenre": "INPUT_STATUSCHECKGENRE"
+                "SolutionPath": "INPUT_SOLUTIONPATH",
+                "IncludePath": "INPUT_INCLUDEPATH",
+                "ExcludePath": "INPUT_EXCLUDEPATH",
+                "FailOnFormattingErrors": "INPUT_FAILONFORMATTINGERRORS",
+                "StatusCheck": "INPUT_STATUSCHECK",
+                "StatusCheckName": "INPUT_STATUSCHECKNAME",
+                "StatusCheckGenre": "INPUT_STATUSCHECKGENRE",
+                "ScopeToPullRequest": "INPUT_SCOPETOPULLREQUEST"
             }
         }
     },
@@ -45,7 +46,7 @@
             "helpMarkDown": "Specify the path to be excluded."
         },
         {
-            "name": "failOnFormattingErrors",
+            "name": "FailOnFormattingErrors",
             "type": "boolean",
             "label": "Fail on Formatting Errors",
             "defaultValue": "true",
@@ -53,7 +54,7 @@
             "helpMarkDown": "If set to false, the task will NOT fail when formatting errors are found."
         },
         {
-            "name": "statusCheck",
+            "name": "StatusCheck",
             "type": "boolean",
             "label": "Set PR Status Check",
             "defaultValue": "false",
@@ -61,7 +62,7 @@
             "helpMarkDown": "If set to true, the task will set a status check in the PR when formatting errors are found."
         },
         {
-            "name": "statusCheckName",
+            "name": "StatusCheckName",
             "type": "string",
             "label": "Status Check Name",
             "defaultValue": "format check",
@@ -69,12 +70,20 @@
             "helpMarkDown": "Name of the status check in the PR for formatting errors. This input is only considered if 'Set PR Status Check' is true."
         },
         {
-            "name": "statusCheckGenre",
+            "name": "StatusCheckGenre",
             "type": "string",
             "label": "Status Check Genre",
             "defaultValue": "formatting",
             "required": false,
             "helpMarkDown": "Genre of the status check in the PR for formatting errors. This input is only considered if 'Set PR Status Check' is true."   
+        },
+        {
+            "name": "ScopeToPullRequest",
+            "type": "boolean",
+            "label": "Scope to Pull Request",
+            "defaultValue": "false",
+            "required": false,
+            "helpMarkDown": "When checked, the task only considers failures for files in the pull request. E.g., only add comments to files on the PR and fail only for failures for comments in the PR."
         }
     ]
 }
