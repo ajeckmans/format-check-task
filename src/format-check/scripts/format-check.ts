@@ -38,7 +38,7 @@ async function main() {
     // Check the format and set PR according to the result
     var shouldFail = await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
 
-    if(shouldFail){
+    if (shouldFail) {
         console.log("Format check task failed.");
         process.exit(1);
     } else {
@@ -64,7 +64,7 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
         includePath: process.env.INPUT_INCLUDEPATH,
         excludePath: process.env.INPUT_EXCLUDEPATH,
         statusCheck: process.env.INPUT_STATUSCHECK === 'true',
-        failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS  === 'true',
+        failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS === 'true',
         statusCheckContext: {
             name: process.env.INPUT_STATUSCHECKNAME,
             genre: process.env.INPUT_STATUSCHECKGENRE,
@@ -114,7 +114,8 @@ function runFormatCheck(taskParams: TaskParameters) {
         console.log(`Using dotnet format version ${dotnetFormatVersion}`);
 
         try {
-            execSync(formatCmd, {stdio: 'inherit'});execSync(formatCmd, {stdio: 'pipe'});
+            execSync(formatCmd, {stdio: 'inherit'});
+            execSync(formatCmd, {stdio: 'pipe'});
         } catch (error) {
             handleDotnetFormatError(error, reportPath);
         }
@@ -226,16 +227,17 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
 }
 
 async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
-    const taskResult = formatIssuesExist ? "Failed" : "Succeeded";
-    const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
-    const gitStatusState = formatIssuesExist && taskParams.failOnFormattingErrors ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
-
-    console.log(`##vso[task.complete result=${taskResult};]${taskMessage}`);
     if (taskParams.statusCheck) {
-        await updatePullRequestStatus(gitApi, envVars, taskParams, gitStatusState);
+        await updatePullRequestStatus(gitApi, envVars, taskParams, formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded);
     }
 
-    return formatIssuesExist && taskParams.failOnFormattingErrors;
+    if (formatIssuesExist && taskParams.failOnFormattingErrors) {
+        console.log(`##vso[task.complete result=Failed;]Code format is incorrect.`);
+        return true;
+    } else {
+        console.log(`##vso[task.complete result=Succeeded;]Code format is correct.`);
+        return false;
+    }
 }
 
 function getStatusDescription(status: gi.GitStatusState): string {
