@@ -239,6 +239,8 @@ function getStatusDescription(status: gi.GitStatusState): string {
 }
 
 async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters, status: gi.GitStatusState) {
+    const logMsg = `Setting status check ${taskParams.statusCheck} to: ${status}`;
+    console.log(logMsg);
     const iterations: GitPullRequestIteration[] = await gitApi.getPullRequestIterations(envVars.repoId, envVars.pullRequestId, envVars.projectId, false);
     let iterationId = Math.max(...iterations.map(iteration => iteration.id));
     const prStatus: gi.GitPullRequestStatus = {
