@@ -181,7 +181,7 @@ async function getPullRequestFiles(gitApi: IGitApi, envVars: EnvVariables) {
     const latestCommit = pullRequestCommits.slice(-1)[0];
     console.log("latest commit: " + latestCommit.commitId)
 
-    const changes = await gitApi.getChanges(envVars.repoId, latestCommit.commitId, envVars.projectId);
+    const changes = await gitApi.getChanges(latestCommit.commitId, envVars.repoId, envVars.projectId);
     let files = changes.changes
         .filter(change => change.changeType !== VersionControlChangeType.Delete)
         .map(change => change.item.path);
