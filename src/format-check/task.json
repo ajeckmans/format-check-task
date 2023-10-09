@@ -13,6 +13,7 @@
                 "includePath": "INPUT_INCLUDEPATH",
                 "excludePath": "INPUT_EXCLUDEPATH",
                 "failOnFormattingErrors": "INPUT_FAILONFORMATTINGERRORS",
+                "statusCheck": "INPUT_STATUSCHECK",
                 "statusCheckName": "INPUT_STATUSCHECKNAME",
                 "statusCheckGenre": "INPUT_STATUSCHECKGENRE"
             }

@@ -63,8 +63,8 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
         solutionPath: process.env.INPUT_SOLUTIONPATH!,
         includePath: process.env.INPUT_INCLUDEPATH,
         excludePath: process.env.INPUT_EXCLUDEPATH,
-        statusCheck: process.env.INPUT_STATUSCHECK,
-        failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS,
+        statusCheck: process.env.INPUT_STATUSCHECK === 'true',
+        failOnFormattingErrors: process.env.INPUT_FAILONFORMATTINGERRORS  === 'true',
         statusCheckContext: {
             name: process.env.INPUT_STATUSCHECKNAME,
             genre: process.env.INPUT_STATUSCHECKGENRE,
