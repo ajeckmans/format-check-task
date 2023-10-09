@@ -8,6 +8,7 @@ import {EnvVariables} from './EnvVariables';
 
 import {FormatReports} from './format-report.interface';
 import {IGitApi} from "azure-devops-node-api/GitApi";
+import {GitPullRequestIteration} from "azure-devops-node-api/interfaces/GitInterfaces";
 
 const commentPreamble = '[DotNetFormatTask][Automated]';
 
@@ -226,7 +227,6 @@ async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitAp
     }
 }
 
-
 function getStatusDescription(status: gi.GitStatusState): string {
     switch (status) {
         case gi.GitStatusState.Pending:
@@ -239,8 +239,8 @@ function getStatusDescription(status: gi.GitStatusState): string {
 }
 
 async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters, status: gi.GitStatusState) {
-    const pullRequest = await gitApi.getPullRequestById(envVars.pullRequestId);
-    const iterationId = parseInt(pullRequest.lastMergeSourceCommit.commitId, 10);
+    const iterations: GitPullRequestIteration[] = await gitApi.getPullRequestIterations(envVars.repoId, envVars.pullRequestId, envVars.projectId, false);
+    let iterationId = Math.max(...iterations.map(iteration => iteration.id));
     const prStatus: gi.GitPullRequestStatus = {
         context: taskParams.statusCheckContext,
         state: status,
