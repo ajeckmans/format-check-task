@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import dotenv from 'dotenv';
 import * as azdev from "azure-devops-node-api";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-import {VersionControlChangeType} from "azure-devops-node-api/interfaces/GitInterfaces";
+import {CommentThreadStatus, VersionControlChangeType} from "azure-devops-node-api/interfaces/GitInterfaces";
 import {TaskParameters} from './TaskParameters';
 import {EnvVariables} from './EnvVariables';
 
@@ -190,7 +190,6 @@ async function getPullRequestFiles(gitApi: IGitApi, envVars: EnvVariables) {
     return files;
 }
 
-
 async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envVars: EnvVariables, taskParams: TaskParameters) {
     console.log("Fetching existing threads.");
     const existingThreads = await gitApi.getThreads(envVars.repoId, envVars.pullRequestId, envVars.projectId);
@@ -243,6 +242,9 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
     for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content?.startsWith(commentPreamble)))) {
         console.log("Processing the existing thread");
+        if (existingThread.status === CommentThreadStatus.Closed) {
+            continue;
+        }
         const threadContent = existingThread.comments[0]?.content;
         if (!activeIssuesContent.includes(threadContent)) {
             console.log("Closing resolved thread.");
@@ -255,15 +257,17 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
 }
 
 async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
-    if (taskParams.statusCheck) {
-        await updatePullRequestStatus(gitApi, envVars, taskParams, formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded);
-    }
-
     if (formatIssuesExist && taskParams.failOnFormattingErrors) {
         console.log(`##vso[task.complete result=Failed;]Code format is incorrect.`);
+        if (taskParams.statusCheck) {
+            await updatePullRequestStatus(gitApi, envVars, taskParams, gi.GitStatusState.Failed);
+        }
         return true;
     } else {
         console.log(`##vso[task.complete result=Succeeded;]Code format is correct.`);
+        if (taskParams.statusCheck) {
+            await updatePullRequestStatus(gitApi, envVars, taskParams, gi.GitStatusState.Succeeded);
+        }
         return false;
     }
 }
