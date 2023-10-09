@@ -3,12 +3,12 @@ import * as fs from 'fs';
 import dotenv from 'dotenv';
 import * as azdev from "azure-devops-node-api";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
+import {CommentThreadStatus, VersionControlChangeType} from "azure-devops-node-api/interfaces/GitInterfaces";
 import {TaskParameters} from './TaskParameters';
 import {EnvVariables} from './EnvVariables';
 
 import {FormatReports} from './format-report.interface';
 import {IGitApi} from "azure-devops-node-api/GitApi";
-import {GitPullRequestIteration} from "azure-devops-node-api/interfaces/GitInterfaces";
 
 const commentPreamble = '[DotNetFormatTask][Automated]';
 
@@ -33,10 +33,10 @@ async function main() {
     }
 
     // Run the format check
-    const reports = runFormatCheck(taskParams);
+    const reports = await runFormatCheck(gitApi, envVars, taskParams);
 
     // Check the format and set PR according to the result
-    var shouldFail = await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
+    let shouldFail = await checkFormatAndSetPR(gitApi, reports, envVars, taskParams);
 
     if (shouldFail) {
         console.log("Format check task failed.");
@@ -69,6 +69,7 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
             name: process.env.INPUT_STATUSCHECKNAME,
             genre: process.env.INPUT_STATUSCHECKGENRE,
         },
+        scopeToPullRequest: process.env.INPUT_SCOPETOPULLREQUEST === 'true',
         token: process.env.INPUT_PAT || envVars.token
     };
 
@@ -80,6 +81,7 @@ function getTaskParameters(envVars: EnvVariables): TaskParameters {
     console.log(`Fail On Formatting Errors: ${params.failOnFormattingErrors}`);
     console.log(`Status Check Name: ${params.statusCheckContext.name}`);
     console.log(`Status Check Genre: ${params.statusCheckContext.genre}`);
+    console.log(`Scope To Pull Request: ${params.scopeToPullRequest}`);
 
     return params;
 }
@@ -102,7 +104,7 @@ function getEnvVariables(): EnvVariables {
     return envVars;
 }
 
-function runFormatCheck(taskParams: TaskParameters) {
+async function runFormatCheck(gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
     const reportPath = "format-report.json";
 
     validateSolutionPath(taskParams.solutionPath, reportPath);
@@ -115,13 +117,12 @@ function runFormatCheck(taskParams: TaskParameters) {
 
         try {
             execSync(formatCmd, {stdio: 'inherit'});
-            execSync(formatCmd, {stdio: 'pipe'});
         } catch (error) {
             handleDotnetFormatError(error, reportPath);
         }
 
         console.log("Dotnet format command completed.");
-        return loadErrorReport(reportPath);
+        return await loadErrorReport(gitApi, envVars, reportPath, taskParams.scopeToPullRequest);
     } catch (error) {
         console.error(`Dotnet format task failed with error ${error}`);
         process.exit(1);
@@ -158,9 +159,35 @@ function handleDotnetFormatError(error: any, reportPath: string) {
     }
 }
 
-function loadErrorReport(reportPath: string) {
+async function loadErrorReport(gitApi: IGitApi, envVars: EnvVariables, reportPath: string, scopeToPullRequest: boolean) {
     console.log("Loading error report.");
-    return JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
+    let report = JSON.parse(fs.readFileSync(reportPath, 'utf8')) as FormatReports;
+
+    // normalize filepath
+    report = report.map(r => ({...r, FilePath: r.FilePath.replace(`${process.env.BUILD_SOURCESDIRECTORY}`, '')}))
+
+    if (scopeToPullRequest) {
+        console.log("Scoping to Pull Request.");
+        const filesInPR = await getPullRequestFiles(gitApi, envVars);
+        report = report.filter(r => filesInPR.includes(r.FilePath));
+    }
+
+    return report;
+}
+
+async function getPullRequestFiles(gitApi: IGitApi, envVars: EnvVariables) {
+    console.log("Getting the PR commits...");
+    const pullRequestCommits = await gitApi.getPullRequestCommits(envVars.repoId, envVars.pullRequestId, envVars.projectId);
+    const latestCommit = pullRequestCommits.slice(-1)[0];
+    console.log("latest commit: " + latestCommit.commitId)
+
+    const changes = await gitApi.getChanges(latestCommit.commitId, envVars.repoId, envVars.projectId);
+    let files = changes.changes
+        .filter(change => change.changeType !== VersionControlChangeType.Delete)
+        .map(change => change.item.path);
+
+    console.log("Commit file changed obtained: ", files);
+    return files;
 }
 
 async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envVars: EnvVariables, taskParams: TaskParameters) {
@@ -195,7 +222,7 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
                     comments: [comment],
                     status: gi.CommentThreadStatus.Active,
                     threadContext: {
-                        filePath: report.FilePath.replace(`${process.env.BUILD_SOURCESDIRECTORY}`, ''),
+                        filePath: report.FilePath,
                         rightFileStart: {line: change.LineNumber, offset: change.CharNumber},
                         rightFileEnd: {line: change.LineNumber, offset: change.CharNumber + 1}
                     }
@@ -209,13 +236,15 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
     await markResolvedThreadsAsClosed(existingThreads, activeIssuesContent, gitApi, envVars);
 
     // Set PR status and fail the task if necessary
-    var shouldFail = await setPRStatusAndFailTask(activeIssuesContent.length > 0, gitApi, envVars, taskParams);
-    return shouldFail;
+    return await setPRStatusAndFailTask(reports.length > 0, gitApi, envVars, taskParams);
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
     for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content?.startsWith(commentPreamble)))) {
         console.log("Processing the existing thread");
+        if (existingThread.status === CommentThreadStatus.Closed) {
+            continue;
+        }
         const threadContent = existingThread.comments[0]?.content;
         if (!activeIssuesContent.includes(threadContent)) {
             console.log("Closing resolved thread.");
@@ -228,15 +257,17 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
 }
 
 async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
-    if (taskParams.statusCheck) {
-        await updatePullRequestStatus(gitApi, envVars, taskParams, formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded);
-    }
-
     if (formatIssuesExist && taskParams.failOnFormattingErrors) {
         console.log(`##vso[task.complete result=Failed;]Code format is incorrect.`);
+        if (taskParams.statusCheck) {
+            await updatePullRequestStatus(gitApi, envVars, taskParams, gi.GitStatusState.Failed);
+        }
         return true;
     } else {
         console.log(`##vso[task.complete result=Succeeded;]Code format is correct.`);
+        if (taskParams.statusCheck) {
+            await updatePullRequestStatus(gitApi, envVars, taskParams, gi.GitStatusState.Succeeded);
+        }
         return false;
     }
 }
@@ -258,8 +289,8 @@ async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, t
     const logMsg = `Setting status check '${taskParams.statusCheckContext.genre}\\${taskParams.statusCheckContext.name}' to: ${gi.GitStatusState[status]}`;
     console.log(logMsg);
 
-    const iterations: GitPullRequestIteration[] = await gitApi.getPullRequestIterations(envVars.repoId, envVars.pullRequestId, envVars.projectId, false);
-    let iterationId = Math.max(...iterations.map(iteration => iteration.id));
+    const iterationId = await getLastPullRequestIteration(gitApi, envVars);
+
     const prStatus: gi.GitPullRequestStatus = {
         context: taskParams.statusCheckContext,
         state: status,
@@ -267,6 +298,11 @@ async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, t
         iterationId: iterationId,
     };
     await gitApi.createPullRequestStatus(prStatus, envVars.repoId, envVars.pullRequestId);
+}
+
+async function getLastPullRequestIteration(gitApi: IGitApi, envVars: EnvVariables) {
+    const pullRequestIterations = await gitApi.getPullRequestIterations(envVars.repoId, envVars.pullRequestId, envVars.projectId, true);
+    return pullRequestIterations[pullRequestIterations.length - 1].id;
 }
 
 // Call these functions in your main function and do your own error handling
