@@ -13,8 +13,7 @@ const taskJson = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'));
 
 const version = semver.split('.')
 
-const combinedVersion = version[2] * 1000000 + version[3];
-
+const combinedVersion = "" + (version[2] * 214748 ) + version[3];
 taskJson.version = {
     Major: version[0],
     Minor: version[1],
