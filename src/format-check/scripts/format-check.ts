@@ -221,6 +221,9 @@ async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitAp
     const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
     const gitStatusState = formatIssuesExist && taskParams.failOnFormattingErrors ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
 
+    const failMessage = formatIssuesExist && taskParams.failOnFormattingErrors ? "Task will fail due to formatting errors." : "Task will not fail.";
+    console.log(failMessage);
+
     console.log(`##vso[task.complete result=${taskResult};]${taskMessage}`);
     if (taskParams.statusCheck) {
         await updatePullRequestStatus(gitApi, envVars, taskParams, gitStatusState);
