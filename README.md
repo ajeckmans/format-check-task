@@ -32,6 +32,8 @@ This project contains a custom Azure DevOps Pull Request (PR) task constructed f
    ```
    In either case it will add comments to the pull request for any issues found by dotnet format.
 
+   To scope the task to only files included in the PR set `ScopeToPullRequest` to true (default: false).
+
 2. During the operation of the pipeline, the task will examine your code and highlight formatting issues using dotnet.
 3. Any errors identified will be automatically pushed as comments to your PR, highlighting the exact locations and nature of the issues.
 
