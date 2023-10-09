@@ -219,7 +219,7 @@ async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCom
 async function setPRStatusAndFailTask(formatIssuesExist: boolean, gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters) {
     const taskResult = formatIssuesExist ? "Failed" : "Succeeded";
     const taskMessage = formatIssuesExist ? "Code format is incorrect." : "Code format is correct.";
-    const gitStatusState = formatIssuesExist ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
+    const gitStatusState = formatIssuesExist && taskParams.failOnFormattingErrors ? gi.GitStatusState.Failed : gi.GitStatusState.Succeeded;
 
     console.log(`##vso[task.complete result=${taskResult};]${taskMessage}`);
     if (taskParams.statusCheck) {
@@ -239,8 +239,9 @@ function getStatusDescription(status: gi.GitStatusState): string {
 }
 
 async function updatePullRequestStatus(gitApi: IGitApi, envVars: EnvVariables, taskParams: TaskParameters, status: gi.GitStatusState) {
-    const logMsg = `Setting status check ${taskParams.statusCheck} to: ${status}`;
+    const logMsg = `Setting status check '${taskParams.statusCheckContext.genre}\\${taskParams.statusCheckContext.name}' to: ${gi.GitStatusState[status]}`;
     console.log(logMsg);
+
     const iterations: GitPullRequestIteration[] = await gitApi.getPullRequestIterations(envVars.repoId, envVars.pullRequestId, envVars.projectId, false);
     let iterationId = Math.max(...iterations.map(iteration => iteration.id));
     const prStatus: gi.GitPullRequestStatus = {
