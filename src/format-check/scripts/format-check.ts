@@ -203,7 +203,7 @@ async function checkFormatAndSetPR(gitApi: IGitApi, reports: FormatReports, envV
 }
 
 async function markResolvedThreadsAsClosed(existingThreads: gi.GitPullRequestCommentThread[], activeIssuesContent: string[], gitApi: IGitApi, envVars: EnvVariables) {
-    for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content.startsWith(commentPreamble)))) {
+    for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content?.startsWith(commentPreamble)))) {
         console.log("Processing the existing thread");
         const threadContent = existingThread.comments[0]?.content;
         if (!activeIssuesContent.includes(threadContent)) {
