@@ -5,12 +5,15 @@ on:
         tags:
             - 'v*'
     pull_request:
+        branches-ignore:
+            - 'main'
         branches:
             - '**'
 
 jobs:
     package-and-publish:
         runs-on: ubuntu-latest
+        if: github.event_name != 'push' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         defaults:
             run:
                 shell: bash -e {0}
