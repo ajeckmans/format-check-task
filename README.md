@@ -34,7 +34,7 @@ This project contains a custom Azure DevOps Pull Request (PR) task constructed f
 
    To scope the task to only files included in the PR set `ScopeToPullRequest` to true (default: false).
 
-   NOTE: Make sure the job running the task has rights to use thye OAuth token and that the user running the build has the 'Contribute to Pull Requests' rights.
+   NOTE: Make sure the job running the task has rights to use the OAuth token and that the user running the build has the 'Contribute to Pull Requests' rights.
 2. During the operation of the pipeline, the task will examine your code and highlight formatting issues using dotnet.
 3. Any errors identified will be automatically pushed as comments to your PR, highlighting the exact locations and nature of the issues.
 
