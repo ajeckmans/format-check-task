@@ -21,6 +21,7 @@ describe('GitService', () => {
         // Initialize mock and settings
         mockGitApi = {
             getChanges: jest.fn(),
+            createThread: jest.fn()
         } as unknown as jest.Mocked<IGitApi>;
 
         settings = {

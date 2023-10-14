@@ -7,7 +7,7 @@ import {AnnotatedReports} from './types/annotated-report';
 import {getSettings} from "./types/settings";
 import {BaseGitApiService} from './services/base-git-api-service';
 import {FormatCheckRunner} from "./services/format-check-runner";
-import {AzureFilePathUtils} from './utils/path-normalizer';
+import {PathNormalizer} from './utils/path-normalizer';
 
 const commentPreamble = '[DotNetFormatTask][Automated]';
 
@@ -38,7 +38,7 @@ async function main() {
     let annotatedReports = reports.map(r => {
         return {
             ...r,
-            FilePath: AzureFilePathUtils.normalizeFilePath(r.FilePath),
+            FilePath: PathNormalizer.normalizeFilePath(r.FilePath),
             commitId: '',
             changeType: gi.VersionControlChangeType.None
         };
@@ -105,7 +105,7 @@ async function getChangedFilesInPR(gitService: GitService, pullRequestUtils: Pul
         const changes = await gitService.getChanges(commit.commitId);
 
         for (const change of changes.changes) {
-            let normalizedPath = AzureFilePathUtils.normalizeFilePath(change.item.path);
+            let normalizedPath = PathNormalizer.normalizeFilePath(change.item.path);
             if (change.changeType === gi.VersionControlChangeType.Delete) {
                 files = files.filter(item => item.FilePath !== normalizedPath);
             } else {

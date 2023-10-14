@@ -7,7 +7,9 @@ import {randomUUID} from "crypto";
 
 jest.mock('child_process');
 jest.mock('process');
-jest.mock('console');
+jest.mock('console', () => ({
+    error: jest.fn(),
+}));
 jest.mock('fs', () => Object.assign({}, jest.requireActual('fs'), {
     existsSync: jest.fn(),
     readFileSync: jest.fn(),
@@ -82,6 +84,7 @@ describe('FormatCheckRunner', () => {
                             throw mockError;
                         }
                     });
+        (fs.existsSync as jest.Mock).mockReturnValue(true); // Mock return value
 
         runner = new FormatCheckRunner('./solution.sln', './include', './exclude');
         await expect(runner.runFormatCheck()).rejects.toThrow();

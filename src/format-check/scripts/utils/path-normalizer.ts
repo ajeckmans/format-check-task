@@ -2,7 +2,7 @@
  * @module AzureFilePathUtils
  * Utilities for working with file paths in an Azure DevOps environment.
  */
-export module AzureFilePathUtils {
+export module PathNormalizer {
 
     /**
      * Normalizes the provided file path by removing the `BUILD_SOURCESDIRECTORY` environment variable value from it.
