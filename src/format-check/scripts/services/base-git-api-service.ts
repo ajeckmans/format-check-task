@@ -45,6 +45,6 @@ export module BaseGitApiService {
      * const gitApi = getGitApi();
      */
     export function getGitApi(): IGitApi {
-        return GitApi;
+        return this.GitApi;
     }
 }
