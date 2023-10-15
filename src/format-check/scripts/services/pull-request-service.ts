@@ -50,6 +50,16 @@ export class PullRequestService {
      * @returns {Promise<void>} A promise that resolves when the pull request status has been updated.
      */
     async updatePullRequestStatus(status: gi.GitStatusState, getStatusDescription: (status: gi.GitStatusState) => string): Promise<void> {
+
+        if (!this.settings.Parameters.statusCheck) {
+            console.warn("updatePullRequestStatus called to set status check, but statusCheck task parameter is false");
+            return;
+        }
+
+        if (!this.settings.Parameters.statusCheckContext) {
+            throw new Error("statusCheckContext is not set in the settings");
+        }
+
         const logMsg = `Setting status check '${this.settings.Parameters.statusCheckContext.genre}\\${this.settings.Parameters.statusCheckContext.name}' to: ${gi.GitStatusState[status]}`;
         console.log(logMsg);
 
@@ -183,13 +193,18 @@ export class PullRequestService {
             this.settings.Environment.pullRequestId,
             this.settings.Environment.projectId,
             true);
-        return pullRequestIterations[pullRequestIterations.length - 1].id;
+
+        const lastIteration = pullRequestIterations.pop();
+        if (!lastIteration?.id) {
+            throw new Error("Last PullRequest Iteration ID not set");
+        }
+        return lastIteration.id;
     }
 
 }
 
 /**
- * The async function `getPullRequestService` initializes the BaseGitApiService with the specified settings and then returns 
+ * The async function `getPullRequestService` initializes the BaseGitApiService with the specified settings and then returns
  * a new instance of the PullRequestService with the BaseGitApiService's GitApi and the specified settings.
  *
  * @param {Settings} settings - An instance of Settings containing project-specific parameters and environment variables.

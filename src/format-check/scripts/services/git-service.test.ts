@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, it, jest} from '@jest/globals';
 jest.mock('./base-git-api-service', () => {
     return {
         BaseGitApiService: {
-            getGitApi: jest.fn().mockReturnValue({ /* your mock IGitApi implementation */ }),
+            getGitApi: jest.fn().mockReturnValue({ }),
         },
     };
 });

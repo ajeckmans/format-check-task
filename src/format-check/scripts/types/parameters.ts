@@ -13,15 +13,15 @@
  * @param {string | undefined} token - Authentication token. Can be undefined.
  */
 export class Parameters {
-    solutionPath: string | undefined;
+    solutionPath!: string;
     excludePath: string | undefined;
-    failOnFormattingErrors: boolean;
+    failOnFormattingErrors!: boolean;
     includePath: string | undefined;
-    scopeToPullRequest: boolean;
-    statusCheck: boolean;
+    scopeToPullRequest!: boolean;
+    statusCheck!: boolean;
     statusCheckContext: {
         genre: string;
         name: string;
-    };
-    token: string | undefined;
+    } | undefined;
+    token!: string;
 }

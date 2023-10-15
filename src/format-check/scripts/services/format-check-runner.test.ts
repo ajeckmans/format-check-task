@@ -6,15 +6,15 @@ import {jest, describe, it, expect, beforeEach, afterEach} from '@jest/globals';
 import {randomUUID} from "crypto";
 
 jest.mock('child_process');
+const mockExecSync = jest.mocked(execSync);
 jest.mock('process');
 jest.mock('console', () => ({
     error: jest.fn(),
 }));
-jest.mock('fs', () => Object.assign({}, jest.requireActual('fs'), {
-    existsSync: jest.fn(),
-    readFileSync: jest.fn(),
-    unlinkSync: jest.fn()
-}));
+jest.mock('fs');
+const mockUnlinkSync = jest.mocked(fs.unlinkSync);
+const mockExistsSync = jest.mocked(fs.existsSync);
+const mockReadFileSync = jest.mocked(fs.readFileSync);
 
 describe('FormatCheckRunner', () => {
     let runner: FormatCheckRunner;
@@ -41,9 +41,20 @@ describe('FormatCheckRunner', () => {
 
     it('should fail construction if solution does not exist', () => {
         (fs.existsSync as jest.Mock).mockReturnValue(false);
-        expect(() => new FormatCheckRunner('./solution.sln', './include', './exclude'))
-            .toThrow('Process exited with code 1');
+
+        // Mock process.exit before the test
+        const exitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {
+        }) as any);
+
+        new FormatCheckRunner('./solution.sln', './include', './exclude');
+
+        // Check if process.exit has been called with code 1
+        expect(exitSpy).toHaveBeenCalledWith(1);
+
+        // Restore process.exit to its original function after the test
+        exitSpy.mockRestore();
     });
+
 
     it('should run format check successfully', async () => {
         const mockReport: FormatReports = [
@@ -78,16 +89,17 @@ describe('FormatCheckRunner', () => {
 
     it('should handle dotnet format crashes', async () => {
         const mockError = new Error('Dotnet format crashed');
-        (execSync as jest.Mock)
-                    .mockImplementation((command: string) => {
-                        if (command.startsWith('dotnet format')) {
-                            throw mockError;
-                        }
-                    });
-        (fs.existsSync as jest.Mock).mockReturnValue(true); // Mock return value
+        mockExecSync.mockImplementation(((command: string) => {
+            if (command.startsWith('dotnet format')) {
+                throw mockError;
+            }
+            return Buffer.from('mock buffer content', 'utf-8');
+        }) as typeof execSync);
+
+        mockExistsSync.mockReturnValue(false);
 
         runner = new FormatCheckRunner('./solution.sln', './include', './exclude');
-        await expect(runner.runFormatCheck()).rejects.toThrow();
+        await expect(runner.runFormatCheck()).rejects.toThrow("Process exited with code 1");
     });
 
     it('should handle dotnet format errors', async () => {
@@ -113,7 +125,7 @@ describe('FormatCheckRunner', () => {
             }
         ];
         (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockReport));
-        
+
         (execSync as jest.Mock)
             .mockImplementationOnce(() => {
             })
@@ -121,13 +133,13 @@ describe('FormatCheckRunner', () => {
             });
         (fs.existsSync as jest.Mock).mockReturnValueOnce(true);
 
-        (fs.unlinkSync as jest.Mock).mockImplementation((path: fs.PathLike) => {
+        mockUnlinkSync.mockImplementation(((path: fs.PathLike) => {
             if (path.toString().endsWith('format-report.json')) {
                 // do nothing
             } else {
                 throw new Error("not mocked");
             }
-        });
+        }) as typeof fs.unlinkSync);
 
         runner = new FormatCheckRunner('./solution.sln', './include', './exclude');
         await expect(runner.runFormatCheck()).resolves.toEqual(

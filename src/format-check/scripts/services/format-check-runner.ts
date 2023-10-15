@@ -21,8 +21,8 @@ export class FormatCheckRunner {
      */
     constructor(
         private solutionPath: string,
-        private includePath: string,
-        private excludePath: string) {
+        private includePath: string | undefined,
+        private excludePath: string | undefined) {
 
         if (!fs.existsSync(solutionPath)) {
             console.error("Solution file at solutionPath does not exist.");

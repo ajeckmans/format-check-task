@@ -5,6 +5,12 @@ import {VersionControlChangeType} from "azure-devops-node-api/interfaces/GitInte
  * A class to represent individual file changes within a Pull Request.
  */
 export class PullRequestFileChange {
+    constructor(FilePath: string, CommitId: string, changeType: VersionControlChangeType) {
+        this.FilePath = FilePath;
+        this.CommitId = CommitId;
+        this.changeType = changeType;
+    }
+
     /**
      * Path to the file that has changed.
      *

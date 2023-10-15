@@ -4,7 +4,14 @@ import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import {Settings} from "../types/settings";
 import {beforeEach, describe, expect, it, jest} from '@jest/globals';
 
-jest.mock('azure-devops-node-api/GitApi');
+jest.mock('./base-git-api-service', () => {
+    return {
+        BaseGitApiService: {
+            getGitApi: jest.fn().mockReturnValue({ }),
+        },
+    };
+});
+
 
 describe('PullRequestService', () => {
     let mockGitApi: jest.Mocked<IGitApi>;
@@ -50,7 +57,7 @@ describe('PullRequestService', () => {
 
     it('should updatePullRequestStatus correctly', async () => {
         const status: gi.GitStatusState = gi.GitStatusState.Succeeded;
-        const descriptionFunc = (status: gi.GitStatusState) => 'description';
+        const descriptionFunc = (_status: gi.GitStatusState) => 'description';
 
         (mockGitApi.getPullRequestIterations as jest.Mock).mockReturnValue([
             {

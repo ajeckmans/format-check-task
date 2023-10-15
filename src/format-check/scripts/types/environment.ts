@@ -7,9 +7,9 @@
 * @property {string | undefined} token - The access token used for authentication. 
 */
 export class Environment {
-    orgUrl?: string;
-    repoId?: string;
-    projectId?: string;
-    pullRequestId?: number;
+    orgUrl!: string;
+    repoId!: string;
+    projectId!: string;
+    pullRequestId!: number;
     token?: string;
 }

@@ -2,6 +2,7 @@
     "compilerOptions": {
         "types": ["node"],
         "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "strict": true
     }
 }

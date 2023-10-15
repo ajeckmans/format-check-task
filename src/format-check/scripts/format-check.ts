@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-import {PullRequestFileChanges} from './types/pull-request-file-change';
+import {PullRequestFileChange, PullRequestFileChanges} from './types/pull-request-file-change';
 import {PullRequestService, getPullRequestService} from './services/pull-request-service';
 import {GitService, getGitService} from "./services/git-service";
 import {AnnotatedReports} from './types/annotated-report';
@@ -18,7 +18,7 @@ async function main() {
     // If the settings indicate that it's not a PR request build, the program will exit.
     const settings = getSettings();
 
-    await BaseGitApiService.init(this.settings);
+    await BaseGitApiService.init(settings);
 
     const pullRequestService = await getPullRequestService(settings);
 
@@ -102,18 +102,23 @@ async function getChangedFilesInPR(gitService: GitService, pullRequestUtils: Pul
 
     for (const commit of pullRequestCommits) {
         console.log("Processing commit: " + commit.commitId);
+
+        if (!commit.commitId) {
+            throw new Error("Commit id is not set");
+        }
+
         const changes = await gitService.getChanges(commit.commitId);
 
-        for (const change of changes.changes) {
-            let normalizedPath = PathNormalizer.normalizeFilePath(change.item.path);
+        for (const change of (changes.changes || [])) {
+            if (change.item!.path == undefined) {
+                console.warn("Warning: File path is undefined for commit id " + commit.commitId);
+                continue;
+            }
+            let normalizedPath = PathNormalizer.normalizeFilePath(change.item!.path);
             if (change.changeType === gi.VersionControlChangeType.Delete) {
                 files = files.filter(item => item.FilePath !== normalizedPath);
-            } else {
-                files.push({
-                    FilePath: normalizedPath,
-                    CommitId: commit.commitId,
-                    changeType: change.changeType
-                });
+            } else if (change.changeType != undefined) {
+                files.push(new PullRequestFileChange(normalizedPath, commit.commitId, change.changeType));
             }
         }
     }
@@ -149,7 +154,7 @@ async function updatePullRequestThreads(
         for (const change of report.FileChanges) {
             const content = `${commentPreamble} ${change.DiagnosticId}: ${change.FormatDescription} on line ${change.LineNumber}, position ${change.CharNumber}`;
             activeIssuesContent.push(content);  // Keep track of active issues
-            const existingThread = existingThreads.find(thread => thread.comments.some(comment => comment.content === content));
+            const existingThread = existingThreads.find(thread => thread.comments?.some(comment => comment.content === content));
 
             const comment = <gi.Comment>{
                 content: content,
@@ -158,6 +163,10 @@ async function updatePullRequestThreads(
 
             if (existingThread) {
                 console.log("Updating existing thread.");
+
+                if (!existingThread.id) {
+                    throw new Error("Existing thread id is not set.");
+                }
 
                 const thread = {
                     status: gi.CommentThreadStatus.Active,
@@ -203,14 +212,19 @@ async function markResolvedThreadsAsClosed(
     pullRequestService: PullRequestService,
     existingThreads: gi.GitPullRequestCommentThread[],
     activeIssuesContent: string[]) {
-    for (const existingThread of existingThreads.filter(thread => thread.comments.some(comment => comment.content?.startsWith(commentPreamble)))) {
+    for (const existingThread of existingThreads.filter(thread => thread.comments?.some(comment => comment.content?.startsWith(commentPreamble)))) {
         console.log("Processing the existing thread");
         if (existingThread.status === gi.CommentThreadStatus.Closed) {
             continue;
         }
-        const threadContent = existingThread.comments[0]?.content;
-        if (!activeIssuesContent.includes(threadContent)) {
+        const threadContent = existingThread.comments![0]?.content;
+        if (threadContent && !activeIssuesContent.includes(threadContent)) {
             console.log("Closing resolved thread.");
+
+            if (!existingThread.id) {
+                throw new Error("Existing thread id is not set.");
+            }
+
             const closedThread = {
                 status: gi.CommentThreadStatus.Closed
             };
