@@ -122,14 +122,15 @@ describe('runFormatCheck', () => {
         (fs.existsSync as jest.Mock).mockReturnValue(true); // Mock return value
         (jest.spyOn(child_process, 'execSync') as jest.Mock).mockReturnValue(Buffer.from(''));
 
+        const document = {
+            Id: randomUUID(),
+            ProjectId: {
+                Id: randomUUID()
+            }
+        };
         const mockReport: FormatReports = [
             {
-                DocumentId: {
-                    Id: randomUUID(),
-                    ProjectId: {
-                        Id: randomUUID()
-                    }
-                },
+                DocumentId: document,
                 FileName: "somefile.ts",
                 FilePath: "/src/somefile.ts",
                 FileChanges: [
@@ -138,7 +139,19 @@ describe('runFormatCheck', () => {
                         DiagnosticId: randomUUID(),
                         LineNumber: 2,
                         FormatDescription: "some error"
-
+                    }
+                ]
+            },
+            {
+                DocumentId: document,
+                FileName: "file-not-in-pr.ts",
+                FilePath: "/src/file-not-in-pr.ts",
+                FileChanges: [
+                    {
+                        CharNumber: 5,
+                        DiagnosticId: randomUUID(),
+                        LineNumber: 1,
+                        FormatDescription: "some error not relevant"
                     }
                 ]
             }
@@ -169,7 +182,7 @@ describe('runFormatCheck', () => {
                 updatedAt: new Date()
             }
         ]);
-        
+
         (mockGitApi.getPullRequest as jest.Mock).mockReturnValue(Promise.resolve({
             status: 'active',
             createdBy: {
@@ -184,7 +197,8 @@ describe('runFormatCheck', () => {
                 {
                     changeType: VersionControlChangeType.Edit,
                     item: {
-                        path: "/src/somefile.ts"
+                        path: "/src/somefile.ts",
+                        commitId: randomUUID()
                     } as GitItem
                 }
             ]
@@ -200,8 +214,27 @@ describe('runFormatCheck', () => {
                 ]
             }
         ]));
-        
+
 
         expect(await runFormatCheck(mockSettings)).toEqual(false);
+
+        const firstArg = mockGitApi.createThread.mock.calls[0][0];
+
+        // expect the first call to be for '/src/somefile.ts'
+        expect(firstArg).toMatchObject({
+            threadContext: expect.objectContaining({
+                filePath: expect.stringContaining('/src/somefile.ts')
+            })
+        });
+
+        // Loop through each call to ensure none of them contain '/src/some-file-not-in-pr.ts'
+        mockGitApi.createThread.mock.calls.forEach(call => {
+            const firstArg = call[0];
+            expect(firstArg).not.toMatchObject({
+                threadContext: expect.objectContaining({
+                    filePath: expect.stringContaining('/src/file-not-in-pr.ts')
+                })
+            });
+        });
     });
 });

@@ -59,7 +59,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
                 report.changeType = change.changeType;
             }
             return report;
-        });
+        }).filter(x => x.commitId !== '');
     }
 
     // Update the Pull Request comment threads based on the format check reports
