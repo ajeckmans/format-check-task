@@ -69,7 +69,7 @@ jobs:
               working-directory: src/format-check
 
             - name: Remove .test.ts files
-              run: find src -type f -name "*.test.ts" -delete
+              run: find . -type f -name "*.test.ts" -delete
               working-directory: src/format-check
 
             - name: Compile TypeScript
