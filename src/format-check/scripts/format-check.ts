@@ -123,7 +123,18 @@ async function getChangedFilesInPR(gitService: GitService, pullRequestUtils: Pul
         }
     }
 
-    console.log("All changed files: ", Array.from(files.entries()));
+    files = files.filter(file =>
+        file.changeType === gi.VersionControlChangeType.Add ||
+        file.changeType === gi.VersionControlChangeType.Edit ||
+        file.changeType === gi.VersionControlChangeType.Encoding ||
+        file.changeType === gi.VersionControlChangeType.Rename ||
+        file.changeType === gi.VersionControlChangeType.SourceRename ||
+        file.changeType === gi.VersionControlChangeType.TargetRename ||
+        file.changeType === gi.VersionControlChangeType.Undelete
+    );
+
+    console.log("All changed files: ");
+    files.forEach(file => console.log(`${file.FilePath} - ${gi.VersionControlChangeType[file.changeType]} - ${file.CommitId}`));
     return files;
 }
 
