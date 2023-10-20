@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "type": "jest",
+            "name": "Jest configuration",
+            "file": "",
+            "jestOptions": [
+                "--randomize"
+            ],
+        },
+        
+    ]
+}

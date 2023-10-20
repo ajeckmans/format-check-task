@@ -24,9 +24,6 @@ jobs:
               with:
                   node-version: 'lts/*'
 
-            - name: Install packages globally
-              run: npm install -g tfx-cli typescript
-
             - name: Set version (tag push)
               if: startsWith(github.ref, 'refs/tags/v')
               run: |
@@ -59,15 +56,29 @@ jobs:
               run: npm ci
               working-directory: src/format-check
 
+            - name: Run Tests
+              run: npm run test
+              working-directory: src/format-check
+
             - name: Update task version
               run: node ../../.github/workflows/update-task-version.js ${{ env.EXT_VERSION }} task.json
+              working-directory: src/format-check
+
+            - name: Clean dev dependencies
+              run: npm prune --production
+              working-directory: src/format-check
+
+            - name: Remove .test.ts files
+              run: find . -type f -name "*.test.ts" -delete
               working-directory: src/format-check
 
             - name: Compile TypeScript
               run: tsc
               working-directory: src/format-check
 
-                # .. previous steps
+
+            - name: Install tfx-cli
+              run: npm install -g tfx-cli
 
             - name: Package Extension
               run: |
