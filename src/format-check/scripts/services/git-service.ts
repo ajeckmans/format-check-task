@@ -44,5 +44,5 @@ export class GitService {
  * @returns {Promise<GitService>} A promise that resolves to a new instance of GitService.
  */
 export async function getGitService(settings: Settings): Promise<GitService> {
-    return new GitService(BaseGitApiService.getGitApi(), settings);
+    return new GitService(await BaseGitApiService.getGitApi(), settings);
 }

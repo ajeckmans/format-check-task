@@ -59,15 +59,16 @@ describe('BaseGitApiService', () => {
         expect(mockGetGitApi).toHaveBeenCalledTimes(1);
     });
 
-    it('should return the initialized Git API instance', () => {
+    it('should return the initialized Git API instance', async () => {
         const mockGitApiInstance: Partial<IGitApi> = {
             baseUrl: "https://mockurl"
         };
 
+        (BaseGitApiService as any).GitApiPromise = Promise.resolve(mockGitApiInstance);
         (BaseGitApiService as any).GitApi = mockGitApiInstance;
 
         // Call the function and check the return value
-        const returnedGitApi = BaseGitApiService.getGitApi();
+        const returnedGitApi = await BaseGitApiService.getGitApi();
 
         // Assertions
         expect(returnedGitApi).toBe(mockGitApiInstance);
@@ -83,23 +84,21 @@ describe('BaseGitApiService', () => {
         await expect(BaseGitApiService.init(mockSettings)).rejects.toThrow('Initialization failed');
     });
 
-    it('should return null if GitApi is not initialized', () => {
+    it('should throw an error if GitApi is not initialized', async () => {
         (BaseGitApiService as any).GitApi = null;
-
-        const returnedGitApi = BaseGitApiService.getGitApi();
-
-        expect(returnedGitApi).toBeNull();
+        await expect(BaseGitApiService.getGitApi()).rejects.toStrictEqual(new Error('call BaseGitApiService.init() first'));
     });
 
-    it('should not re-initialize if already initialized', async () => {
-        const mockGetGitApi = jest.fn(() => Promise.resolve());
-        const mockWebApiInstance = { getGitApi: mockGetGitApi };
+   it('should not re-initialize if already initialized', async () => {
+       console.log(" =====================     it('should not re-initialize if already initialized', async () => { ================")
+       const mockGetGitApi = jest.fn(() => Promise.resolve());
+       const mockWebApiInstance = {getGitApi: mockGetGitApi};
 
-        MockedWebApi.mockImplementation(() => mockWebApiInstance);
+       MockedWebApi.mockImplementation(() => mockWebApiInstance);
 
-        await BaseGitApiService.init(mockSettings);
-        await BaseGitApiService.init(mockSettings);
+       await BaseGitApiService.init(mockSettings);
+       await BaseGitApiService.init(mockSettings);
 
-        expect(mockGetGitApi).toHaveBeenCalledTimes(1);
-    });
+       expect(mockGetGitApi).toHaveBeenCalledTimes(1);
+   });
 });

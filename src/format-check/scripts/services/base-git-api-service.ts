@@ -1,14 +1,13 @@
+import { IGitApi } from "azure-devops-node-api/GitApi";
+import { Settings } from "../types/settings";
 import * as azdev from "azure-devops-node-api";
-import {IGitApi} from "azure-devops-node-api/GitApi";
-import {Settings} from "../types/settings";
 
 export class BaseGitApiService {
     private static GitApi: IGitApi | null = null;
+    private static GitApiPromise: Promise<IGitApi> | null = null;
 
     public static async init(settings: Settings): Promise<void> {
-        if (this.GitApi != null) {
-            return;
-        }
+        if (this.GitApiPromise) return;
 
         console.log("Creating personal access token handler.");
         const authHandler = azdev.getPersonalAccessTokenHandler(settings.Parameters.token);
@@ -17,19 +16,22 @@ export class BaseGitApiService {
         const connection = new azdev.WebApi(settings.Environment.orgUrl, authHandler);
 
         console.log("Getting Git API.");
-        this.GitApi = await connection.getGitApi();
+        this.GitApiPromise = connection.getGitApi();
+        this.GitApi = await this.GitApiPromise;
     }
 
-    public static getGitApi(): IGitApi {
-        if (this.GitApi == null) {
+    public static async getGitApi (): Promise<IGitApi> {
+        if (this.GitApiPromise === null) {
             throw new Error('call BaseGitApiService.init() first');
+        }
+        if (this.GitApi === null) {
+            this.GitApi = await this.GitApiPromise;
         }
         return this.GitApi;
     }
 
-    // This method is only for testing purposes
     public static reset() {
         this.GitApi = null;
+        this.GitApiPromise = null;
     }
-
 }

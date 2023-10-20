@@ -14,17 +14,18 @@ jest.mock('console', () => ({
 jest.mock('fs');
 const mockUnlinkSync = jest.mocked(fs.unlinkSync);
 const mockExistsSync = jest.mocked(fs.existsSync);
-const mockReadFileSync = jest.mocked(fs.readFileSync);
 
 describe('FormatCheckRunner', () => {
     let runner: FormatCheckRunner;
     let exitSpy: jest.Mock;
+    let exitCode: number = 0;
 
     beforeEach(() => {
         jest.clearAllMocks();
 
-        exitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-            throw new Error(`Process exited with code ${code}`);
+        exitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: number | undefined) => {
+            exitCode = code ?? 0;
+            return undefined as unknown as never;
         }) as unknown as jest.Mock;
     });
 
@@ -99,7 +100,8 @@ describe('FormatCheckRunner', () => {
         mockExistsSync.mockReturnValue(false);
 
         runner = new FormatCheckRunner('./solution.sln', './include', './exclude');
-        await expect(runner.runFormatCheck()).rejects.toThrow("Process exited with code 1");
+        await runner.runFormatCheck();
+        expect(exitCode).toBe(1);
     });
 
     it('should handle dotnet format errors', async () => {

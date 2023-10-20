@@ -211,5 +211,5 @@ export class PullRequestService {
  * @returns {Promise<PullRequestService>} A promise that resolves to a new instance of PullRequestService.
  */
 export async function getPullRequestService(settings: Settings): Promise<PullRequestService> {
-    return new PullRequestService(BaseGitApiService.getGitApi(), settings);
+    return new PullRequestService(await BaseGitApiService.getGitApi(), settings);
 }
