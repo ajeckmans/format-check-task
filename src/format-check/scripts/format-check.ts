@@ -1,25 +1,29 @@
-import dotenv from 'dotenv';
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import {PullRequestFileChange, PullRequestFileChanges} from './types/pull-request-file-change';
 import {PullRequestService, getPullRequestService} from './services/pull-request-service';
-import {GitService, getGitService} from "./services/git-service";
 import {AnnotatedReports} from './types/annotated-report';
-import {getSettings} from "./types/settings";
-import {BaseGitApiService} from './services/base-git-api-service';
 import {FormatCheckRunner} from "./services/format-check-runner";
 import {PathNormalizer} from './utils/path-normalizer';
+import {Settings} from './types/settings';
 
 const commentPreamble = '[DotNetFormatTask][Automated]';
 
-dotenv.config();
-
-async function main() {
-    // Retrieve the settings for the format check task.
-    // If the settings indicate that it's not a PR request build, the program will exit.
-    const settings = getSettings();
-
-    await BaseGitApiService.init(settings);
-
+/**
+ * The `runFormatCheck` is an asynchronous function that performs a formatting check on certain code files and updates pull request status accordingly.
+ *
+ * The function follows these main steps:
+ * 1. Initializes and starts a format check runner with appropriate file paths provided via Settings.
+ * 2. Generates annotated reports for the files checked.
+ * 3. If the scope is set to Pull Request, it retrieves the list of files involved in the Pull Request and updates the reports accordingly.
+ * 4. Updates the Pull Request comment threads based on the resulting check report.
+ * 5. Sets the final Pull Request status based on the check outcome and determines if the task should fail.
+ *
+ * @async
+ * @function runFormatCheck
+ * @param {Settings} settings - Settings object containing parameters needed for the format check runner and Pull Request Service.
+ * @returns {Promise<boolean>} - Promise resolving to a boolean indicating if the task should fail due to formatting errors.
+ */
+async function runFormatCheck(settings: Settings): Promise<boolean> {
     const pullRequestService = await getPullRequestService(settings);
 
     if (settings.Parameters.statusCheck) {
@@ -46,8 +50,7 @@ async function main() {
 
     if (settings.Parameters.scopeToPullRequest) {
         console.log("Scoping to Pull Request.");
-        const gitService = await getGitService(settings);
-        let changedInPR = await getChangedFilesInPR(gitService, pullRequestService);
+        let changedInPR = await getChangedFilesInPR(pullRequestService);
 
         annotatedReports = annotatedReports.map(report => {
             let change = changedInPR.find(c => c.FilePath === report.FilePath);
@@ -65,27 +68,17 @@ async function main() {
         annotatedReports);
 
     // Set final Pull Request status and determine if the task should fail
-    const shouldFail = await setPullRequestStatusAndDetermineShouldFailTask(
+    return await setPullRequestStatusAndDetermineShouldFailTask(
         pullRequestService,
         annotatedReports.length > 0,
         settings.Parameters.failOnFormattingErrors,
         settings.Parameters.statusCheck);
-
-    // Exit the program based on the format check outcome
-    if (shouldFail) {
-        console.log("Format check task failed.");
-        process.exit(1);
-    } else {
-        console.log("Format check task succeeded.");
-        process.exit(0);
-    }
 }
 
 /**
  * The `getChangedFilesInPR` function retrieves
  * all pull request file changes with respect to their commits it handles.
  *
- * @param {GitService} gitService - An instance of GitService to interact with GIT API
  * @param {PullRequestService} pullRequestUtils - An instance of PullRequestService to interact with Pull Request API
  *
  * @return {Promise<PullRequestFileChanges>} - Returns a Promise that resolves to an array of file changes.
@@ -94,44 +87,32 @@ async function main() {
  * @description
  * Function operates asynchronously, because of the nature of its service calls to GitService and PullRequestService.
  */
-async function getChangedFilesInPR(gitService: GitService, pullRequestUtils: PullRequestService): Promise<PullRequestFileChanges> {
+async function getChangedFilesInPR(pullRequestUtils: PullRequestService): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
-    const pullRequestCommits = await pullRequestUtils.getPullRequestCommits();
+    let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
+
+    // filter on changes that actually are important for format changes
+    pullRequestChanges = pullRequestChanges.filter(change =>
+        change.changeType === gi.VersionControlChangeType.Add ||
+        change.changeType === gi.VersionControlChangeType.Edit ||
+        change.changeType === gi.VersionControlChangeType.Encoding ||
+        change.changeType === gi.VersionControlChangeType.Rename ||
+        change.changeType === gi.VersionControlChangeType.SourceRename ||
+        change.changeType === gi.VersionControlChangeType.TargetRename ||
+        change.changeType === gi.VersionControlChangeType.Undelete
+    );
 
     let files: PullRequestFileChanges = [];
 
-    for (const commit of pullRequestCommits) {
-        console.log("Processing commit: " + commit.commitId);
-
-        if (!commit.commitId) {
-            throw new Error("Commit id is not set");
+    for (const change of pullRequestChanges) {
+        if (change.item!.path == undefined) {
+            console.warn("Warning: File path is undefined for commit id " + change.item?.commitId);
+            continue;
         }
 
-        const changes = await gitService.getChanges(commit.commitId);
-
-        for (const change of (changes.changes || [])) {
-            if (change.item!.path == undefined) {
-                console.warn("Warning: File path is undefined for commit id " + commit.commitId);
-                continue;
-            }
-            let normalizedPath = PathNormalizer.normalizeFilePath(change.item!.path);
-            if (change.changeType === gi.VersionControlChangeType.Delete) {
-                files = files.filter(item => item.FilePath !== normalizedPath);
-            } else if (change.changeType != undefined) {
-                files.push(new PullRequestFileChange(normalizedPath, commit.commitId, change.changeType));
-            }
-        }
+        let normalizedPath = PathNormalizer.normalizeFilePath(change.item!.path);
+        files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!));
     }
-
-    files = files.filter(file =>
-        file.changeType === gi.VersionControlChangeType.Add ||
-        file.changeType === gi.VersionControlChangeType.Edit ||
-        file.changeType === gi.VersionControlChangeType.Encoding ||
-        file.changeType === gi.VersionControlChangeType.Rename ||
-        file.changeType === gi.VersionControlChangeType.SourceRename ||
-        file.changeType === gi.VersionControlChangeType.TargetRename ||
-        file.changeType === gi.VersionControlChangeType.Undelete
-    );
 
     console.log("All changed files: ");
     files.forEach(file => console.log(`${file.FilePath} - ${gi.VersionControlChangeType[file.changeType]} - ${file.CommitId}`));
@@ -296,8 +277,11 @@ async function setPullRequestStatusAndDetermineShouldFailTask(
     }
 }
 
-// Call these functions in your main function and do your own error handling
-main().catch(error => {
-    console.error(error);
-    process.exit(1);
-});
+export {
+    runFormatCheck,
+    getChangedFilesInPR,
+    updatePullRequestThreads,
+    markResolvedThreadsAsClosed,
+    getStatusDescription,
+    setPullRequestStatusAndDetermineShouldFailTask
+};

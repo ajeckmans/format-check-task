@@ -1,7 +1,11 @@
 import {IGitApi} from "azure-devops-node-api/GitApi";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
+import {
+    GitPullRequestCommentThread,
+    GitVersionOptions,
+    GitVersionType
+} from "azure-devops-node-api/interfaces/GitInterfaces";
 import {Settings} from "../types/settings";
-import {GitPullRequestCommentThread} from "azure-devops-node-api/interfaces/GitInterfaces";
 import {BaseGitApiService} from "./base-git-api-service";
 
 /**
@@ -18,7 +22,7 @@ import {BaseGitApiService} from "./base-git-api-service";
  * @method constructor(gitApi, settings) - Initializes a new instance of the PullRequestService class.
  * @method async updatePullRequestStatus(status, getStatusDescription) - Asynchronously updates the pull request status.
  * @method private async getLastPullRequestIteration() - Asynchronously obtains the last pull request iteration.
- * @method async getPullRequestCommits() - Asynchronously gets the pull request's commits.
+ * @method async getPullRequestChanges() - Asynchronously fetches and returns the changes made in a pull request.
  * @method async getThreads() - Asynchronously gets the threads related to a pull request.
  * @method async updateThread(commentThread, existingThreadId) - Asynchronously updates a specific thread of a pull request.
  * @method async createThread(thread) - Asynchronously creates a new thread in a pull request.
@@ -75,25 +79,46 @@ export class PullRequestService {
     }
 
     /**
-     * Asynchronously fetches the commits related to a specific pull request.
+     * Asynchronously fetches and returns the changes made in a pull request.
      *
-     * @method getPullRequestCommits
+     * @method getPullRequestChanges
      * @public
      * @async
      *
-     * This method uses the `gitApi` instance to call the `getPullRequestCommits` function. It uses the repository id,
-     * pull request id, and project id derived from the `settings.EnvVars` to target a specific pull request in the Azure
-     * DevOps Git API. Fetching pull request commits can be practical to analyze the changes made within a pull request.
+     * This method first fetches an instance of the pull request with the help of the `gitApi.getPullRequest` method,
+     * using repository id, pull request id, and project id derived from `settings.Environment`.
+     * Then, it fetches the differences between the base version (source branch) and the target version (target branch)
+     * of the pull request using the `gitApi.getCommitDiffs` method.
      *
-     * @returns {Promise<gi.GitCommitRef[]>} A promise that fulfills with an array of GitCommitRef objects representing
-     *  all the commits involved in the pull request. Each GitCommitRef provides details about the commit, such as the
-     *  commit's author, date of the commit, and so on.
+     * The `baseVersion`, `baseVersionOptions`, `baseVersionType`, `targetVersion`, `targetVersionOptions`,
+     * and `targetVersionType` parameters for `gitApi.getCommitDiffs` method are set using the properties of
+     * the obtained pull request instance.
+     *
+     * @returns {Promise<gi.GitChange[]>} A promise that fulfills with an array of GitChange objects that represents the changes
+     * made in the pull request. If there are no changes, an empty array is returned.
      */
-    async getPullRequestCommits(): Promise<gi.GitCommitRef[]> {
-        return await this.gitApi.getPullRequestCommits(
-            this.settings.Environment.repoId,
+    async getPullRequestChanges(): Promise<gi.GitChange[]> {
+        let pr = await this.gitApi.getPullRequest(this.settings.Environment.repoId,
             this.settings.Environment.pullRequestId,
             this.settings.Environment.projectId);
+        let commitDiffs = await this.gitApi.getCommitDiffs(
+            this.settings.Environment.repoId,
+            this.settings.Environment.projectId,
+            false,
+            undefined,
+            undefined,
+            {
+                baseVersion: pr.sourceRefName,
+                baseVersionOptions: GitVersionOptions.None,
+                baseVersionType: GitVersionType.Branch
+            },
+            {
+                targetVersion: pr.targetRefName,
+                targetVersionOptions: GitVersionOptions.None,
+                targetVersionType: GitVersionType.Branch
+            });
+
+        return commitDiffs.changes || [];
     }
 
     /**
