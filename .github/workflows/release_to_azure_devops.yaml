@@ -76,6 +76,10 @@ jobs:
               run: tsc
               working-directory: src/format-check
 
+
+            - name: Install tfx-cli
+              run: npm install -g tfx-cli
+
             - name: Package Extension
               run: |
                   if [[ "${{ github.event_name }}" == "pull_request" ]]; then
