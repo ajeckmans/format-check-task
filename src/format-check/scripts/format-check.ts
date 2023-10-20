@@ -166,7 +166,7 @@ async function updatePullRequestThreads(
                 };
                 await pullRequestService.updateThread(thread, existingThread.id);
             } else {
-                console.log("Creating new thread.");
+                console.log(`Creating new thread for file ${report.FilePath} .`);
                 const thread = <gi.GitPullRequestCommentThread>{
                     comments: [comment],
                     status: gi.CommentThreadStatus.Active,
@@ -205,7 +205,7 @@ async function markResolvedThreadsAsClosed(
     existingThreads: gi.GitPullRequestCommentThread[],
     activeIssuesContent: string[]) {
     for (const existingThread of existingThreads.filter(thread => thread.comments?.some(comment => comment.content?.startsWith(commentPreamble)))) {
-        console.log("Processing the existing thread");
+        console.log(`Processing the existing thread for file ${existingThread.threadContext?.filePath}.`);
         if (existingThread.status === gi.CommentThreadStatus.Closed) {
             continue;
         }
