@@ -68,6 +68,10 @@ jobs:
               run: npm prune --production
               working-directory: src/format-check
 
+            - name: Remove .test.ts files
+              run: find src -type f -name "*.test.ts" -delete
+              working-directory: src/format-check
+
             - name: Compile TypeScript
               run: tsc
               working-directory: src/format-check
