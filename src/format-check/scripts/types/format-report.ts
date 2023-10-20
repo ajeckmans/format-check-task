@@ -3,12 +3,13 @@
  * A class to represent the report of a single file's formatting issues.
  */
 export class FormatReport {
+
   /**
    * Information about the Document ID.
    * 
    * @type {{ ProjectId: { Id: string }, Id: string }}
    */
-  DocumentId: {
+  DocumentId!: {
       ProjectId: {
           Id: string;
       };
@@ -20,21 +21,21 @@ export class FormatReport {
    * 
    * @type {string}
    */
-  FileName: string;
+  FileName!: string;
 
   /**
    * Path to the file.
    * 
    * @type {string}
    */
-  FilePath: string;
+  FilePath!: string;
 
   /**
    * Array of formatting issues in the file.
    * 
    * @type {{ LineNumber: number, CharNumber: number, DiagnosticId: string, FormatDescription: string }[]}
    */
-  FileChanges: {
+  FileChanges!: {
       LineNumber: number;
       CharNumber: number;
       DiagnosticId: string;

@@ -8,6 +8,12 @@ import {VersionControlChangeType} from "azure-devops-node-api/interfaces/GitInte
  * @extends {FormatReport}
  */
 export class AnnotatedReport extends FormatReport {
+    constructor(commitId: string, changeType: VersionControlChangeType) {
+        super();
+        this.commitId = commitId;
+        this.changeType = changeType;
+    }
+
     /**
      * The commit ID associated with the report.
      *
