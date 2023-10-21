@@ -32,4 +32,22 @@ describe('PathNormalizer', () => {
         // Assert
         expect(normalized).toBe('/folder/file.txt');
     });
+
+    it('should normalize file path and always keep a /', () => {
+        // Arrange
+        const mockSettings = {
+            Environment: {
+                sourcesDirectory: '/source/'
+            }
+        } as unknown as Settings;
+
+        const filePath = '/source/folder/file.txt';
+        const normalizer = new PathNormalizer(mockSettings);
+
+        // Act
+        const normalized = normalizer.normalizeFilePath(filePath);
+
+        // Assert
+        expect(normalized).toBe('/folder/file.txt');
+    });
 });

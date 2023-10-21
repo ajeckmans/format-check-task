@@ -27,6 +27,7 @@ export class PathNormalizer {
      * @returns {string} Normalized version of the supplied file path, relative to the project's source directory.
      */
     public normalizeFilePath(filePath: string): string {
-     return filePath.replace(`${this.settings.Environment.sourcesDirectory}`, '');
+        const pathToStrip = this.settings.Environment.sourcesDirectory.replace(/\/$/, '');
+        return filePath.replace(`${pathToStrip}`, '');
     }
 }
