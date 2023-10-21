@@ -99,16 +99,7 @@ export class PullRequestService {
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
         let pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
-        const sanitizedTargetRef = pr.targetRefName?.replace("refs/", "");
-        const targetRefs = await this.gitApi.getRefs(this.settings.Environment.repoId, this.settings.Environment.projectId, sanitizedTargetRef);
-
-        if (targetRefs.length === 0) {
-            console.error(`⚠️ Target ref not found: ${sanitizedTargetRef}.`);
-            return [];
-        }
-
-        const latestTargetCommitId = targetRefs[0].objectId;
-        const latestSourceCommitId = pr.lastMergeSourceCommit?.commitId;
+        const sanitizedTargetRef = pr.targetRefName?.replace("refs/heads", "");
 
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
@@ -117,14 +108,14 @@ export class PullRequestService {
             undefined,
             undefined,
             {
-                baseVersion: latestSourceCommitId,
+                baseVersion: sanitizedTargetRef,
                 baseVersionOptions: GitVersionOptions.None,
-                baseVersionType: GitVersionType.Commit
+                baseVersionType: GitVersionType.Branch
             },
             {
-                targetVersion: latestTargetCommitId,
+                targetVersion: pr.sourceRefName,
                 targetVersionOptions: GitVersionOptions.None,
-                targetVersionType: GitVersionType.Commit
+                targetVersionType: GitVersionType.Branch
             });
 
         let changes = commitDiffs.changes || [];
