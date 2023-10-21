@@ -107,12 +107,10 @@ export class PullRequestService {
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
             this.settings.Environment.projectId,
-            false,
             undefined,
             undefined,
-            {
-                baseVersion: sanitizedTargetRef
-            },
+            undefined,
+            undefined,
             {
                 targetVersion: sanitizedSourceRef
             });
