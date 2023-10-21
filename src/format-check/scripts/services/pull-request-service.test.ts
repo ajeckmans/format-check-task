@@ -3,6 +3,7 @@ import {IGitApi} from "azure-devops-node-api/GitApi";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import {Settings} from "../types/settings";
 import {beforeEach, describe, expect, it, jest} from '@jest/globals';
+import { randomUUID } from 'crypto';
 
 jest.mock('./base-git-api-service', () => {
     return {
@@ -38,7 +39,9 @@ describe('PullRequestService', () => {
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
                 token: 'mockToken',
-                sourcesDirectory: '/src'
+                sourcesDirectory: '/src',
+                pullRequestSourceCommit: randomUUID(),
+                pullRequestTargetBranch: '/refs/heads/main'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',
@@ -193,7 +196,9 @@ describe('getPullRequestService function', () => {
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
                 token: 'mockToken',
-                sourcesDirectory: '/src'
+                sourcesDirectory: '/src',
+                pullRequestSourceCommit: randomUUID(),
+                pullRequestTargetBranch: '/refs/heads/main'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',
