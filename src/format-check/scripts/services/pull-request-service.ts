@@ -108,14 +108,14 @@ export class PullRequestService {
             undefined,
             undefined,
             {
-                baseVersion: pr.sourceRefName,
+                baseVersion: pr.lastMergeSourceCommit?.commitId,
                 baseVersionOptions: GitVersionOptions.None,
-                baseVersionType: GitVersionType.Branch
+                baseVersionType: GitVersionType.Commit
             },
             {
-                targetVersion: pr.targetRefName,
+                targetVersion: pr.lastMergeTargetCommit?.commitId,
                 targetVersionOptions: GitVersionOptions.None,
-                targetVersionType: GitVersionType.Branch
+                targetVersionType: GitVersionType.Commit
             });
 
         return commitDiffs.changes || [];
