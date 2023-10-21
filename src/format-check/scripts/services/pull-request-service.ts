@@ -1,12 +1,9 @@
 import {IGitApi} from "azure-devops-node-api/GitApi";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-import {
-    GitPullRequestCommentThread,
-    GitVersionOptions,
-    GitVersionType
-} from "azure-devops-node-api/interfaces/GitInterfaces";
+import {GitPullRequestCommentThread} from "azure-devops-node-api/interfaces/GitInterfaces";
 import {Settings} from "../types/settings";
 import {BaseGitApiService} from "./base-git-api-service";
+import fetch from 'node-fetch';
 
 /**
  * PullRequestService class is a service that offers methods to interact with pull requests.
@@ -115,7 +112,7 @@ export class PullRequestService {
                     'Authorization': `Basic ${btoa(`:${this.settings.Parameters.token}`)}`
                 }
             });
-        let commitDiffs : gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
+        let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
 
         let changes = commitDiffs.changes || [];
 
