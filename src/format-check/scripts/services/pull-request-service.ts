@@ -102,16 +102,16 @@ export class PullRequestService {
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
             this.settings.Environment.projectId,
-            false,
+            true,
             undefined,
             undefined,
             {
-                baseVersion: targetBranch,
-                baseVersionType: GitVersionType.Branch
+                version: targetBranch,
+                versionType: GitVersionType.Branch
             },
             {
-                targetVersion: this.settings.Environment.pullRequestSourceCommit,
-                targetVersionType: GitVersionType.Commit
+                version: this.settings.Environment.pullRequestSourceCommit,
+                versionType: GitVersionType.Commit
             });
 
         console.log(commitDiffs);
