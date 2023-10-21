@@ -1,6 +1,10 @@
 import {IGitApi} from "azure-devops-node-api/GitApi";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-import {GitPullRequestCommentThread, GitVersionType} from "azure-devops-node-api/interfaces/GitInterfaces";
+import {
+    GitPullRequestCommentThread,
+    GitVersionOptions,
+    GitVersionType
+} from "azure-devops-node-api/interfaces/GitInterfaces";
 import {Settings} from "../types/settings";
 import {BaseGitApiService} from "./base-git-api-service";
 
@@ -102,16 +106,18 @@ export class PullRequestService {
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
             this.settings.Environment.projectId,
-            true,
+            false,
             undefined,
             undefined,
             {
                 version: targetBranch,
-                versionType: GitVersionType.Branch
+                versionType: GitVersionType.Branch,
+                versionOptions: GitVersionOptions.None
             },
             {
                 version: this.settings.Environment.pullRequestSourceCommit,
-                versionType: GitVersionType.Commit
+                versionType: GitVersionType.Commit,
+                versionOptions: GitVersionOptions.None
             });
 
         console.log(commitDiffs);
