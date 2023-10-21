@@ -49,7 +49,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
     }) as AnnotatedReports;
 
     if (settings.Parameters.scopeToPullRequest) {
-        console.log("Scoping to Pull Request.");
+        console.log("Scoping issues to files part of the Pull Request.");
         let changedInPR = await getChangedFilesInPR(pullRequestService, settings);
 
         annotatedReports = annotatedReports.map(report => {
@@ -126,7 +126,7 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
         files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!));
     }
 
-    console.log("All changed files: ");
+    console.log("All changed files considered to be part of this Pull Request: ");
     files.forEach(file => console.log(`${file.FilePath} - ${gi.VersionControlChangeType[file.changeType]} - ${file.CommitId}`));
     return files;
 }
