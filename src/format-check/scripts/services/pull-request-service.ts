@@ -111,14 +111,10 @@ export class PullRequestService {
             undefined,
             undefined,
             {
-                baseVersion: sanitizedTargetRef,
-                baseVersionOptions: GitVersionOptions.None,
-                baseVersionType: GitVersionType.Branch
+                baseVersion: sanitizedTargetRef
             },
             {
-                targetVersion: sanitizedSourceRef,
-                targetVersionOptions: GitVersionOptions.None,
-                targetVersionType: GitVersionType.Branch
+                targetVersion: sanitizedSourceRef
             });
 
         let changes = commitDiffs.changes || [];
