@@ -99,10 +99,10 @@ export class PullRequestService {
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
         let pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
-        const targetRefs = await this.gitApi.getRefs(this.settings.Environment.repoId, this.settings.Environment.projectId, `refs/heads/${pr.targetRefName}`);
+        const targetRefs = await this.gitApi.getRefs(this.settings.Environment.repoId, this.settings.Environment.projectId, pr.targetRefName);
 
         if (targetRefs.length === 0) {
-            console.error(`⚠️ Target ref not found.`);
+            console.error(`⚠️ Target ref not found: ${pr.targetRefName}.`);
             return [];
         }
 
