@@ -97,6 +97,8 @@ export class PullRequestService {
 
         console.log(`Checking for file changes between ${this.settings.Environment.pullRequestSourceCommit} and ${this.settings.Environment.pullRequestTargetBranch}`);
 
+        let targetBranch = this.settings.Environment.pullRequestTargetBranch.replace('/refs/heads/', '');
+
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
             this.settings.Environment.projectId,
@@ -104,7 +106,7 @@ export class PullRequestService {
             undefined,
             undefined,
             {
-                baseVersion: this.settings.Environment.pullRequestTargetBranch,
+                baseVersion: targetBranch,
                 baseVersionType: GitVersionType.Branch
             },
             {

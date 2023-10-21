@@ -92,7 +92,9 @@ describe('runFormatCheck', () => {
             projectId: "ppppp",
             pullRequestId: 123,
             token: "some-token-secret",
-            sourcesDirectory: '/src'
+            sourcesDirectory: '/src',
+            pullRequestSourceCommit: '123123132123',
+            pullRequestTargetBranch: '/refs/heads/main'
         },
         Parameters: {
             statusCheck: true,
