@@ -112,12 +112,18 @@ export class PullRequestService {
             {
                 version: targetBranch,
                 versionType: GitVersionType.Branch,
-                versionOptions: GitVersionOptions.None
+                versionOptions: GitVersionOptions.None,
+                baseVersion: targetBranch,
+                baseVersionType: GitVersionType.Branch,
+                baseVersionOptions: GitVersionOptions.None
             },
             {
                 version: this.settings.Environment.pullRequestSourceCommit,
                 versionType: GitVersionType.Commit,
-                versionOptions: GitVersionOptions.None
+                versionOptions: GitVersionOptions.None,
+                targetVersion: this.settings.Environment.pullRequestSourceCommit,
+                targetVersionType: GitVersionType.Commit,
+                targetVersionOptions: GitVersionOptions.None
             });
 
         console.log(commitDiffs);
