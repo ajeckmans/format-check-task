@@ -99,7 +99,10 @@ export class PullRequestService {
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
         let pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
-        const sanitizedTargetRef = pr.targetRefName?.replace("refs/heads", "");
+        const sanitizedTargetRef = pr.targetRefName?.replace("refs/heads/", "");
+        const sanitizedSourceRef = pr.sourceRefName?.replace("refs/heads/", "");
+
+        console.log(`Checking for file changes between ${sanitizedTargetRef} and ${sanitizedSourceRef}`);
 
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
@@ -113,7 +116,7 @@ export class PullRequestService {
                 baseVersionType: GitVersionType.Branch
             },
             {
-                targetVersion: pr.sourceRefName,
+                targetVersion: sanitizedSourceRef,
                 targetVersionOptions: GitVersionOptions.None,
                 targetVersionType: GitVersionType.Branch
             });
