@@ -59,7 +59,16 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
                 report.changeType = change.changeType;
             }
             return report;
-        }).filter(x => x.commitId !== '');
+        }).filter(x => {
+            let include = changedInPR.some(c => c.FilePath === x.FilePath);
+
+            if (include) {
+                console.log(`✔ Include file: ${x.FilePath}`);
+            } else {
+                console.log(`❌ Exclude file: ${x.FilePath}`);
+            }
+            return include;
+        });
     }
 
     // Update the Pull Request comment threads based on the format check reports
@@ -166,7 +175,7 @@ async function updatePullRequestThreads(
                 };
                 await pullRequestService.updateThread(thread, existingThread.id);
             } else {
-                console.log(`Creating new thread for file ${report.FilePath} .`);
+                console.log("📝 Creating new thread for file ${report.FilePath} .");
                 const thread = <gi.GitPullRequestCommentThread>{
                     comments: [comment],
                     status: gi.CommentThreadStatus.Active,
@@ -211,7 +220,7 @@ async function markResolvedThreadsAsClosed(
         }
         const threadContent = existingThread.comments![0]?.content;
         if (threadContent && !activeIssuesContent.includes(threadContent)) {
-            console.log("Closing resolved thread.");
+            console.log("🔒 Closing resolved thread.");
 
             if (!existingThread.id) {
                 throw new Error("Existing thread id is not set.");
