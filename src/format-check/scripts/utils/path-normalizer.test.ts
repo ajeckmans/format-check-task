@@ -1,5 +1,6 @@
-import { PathNormalizer } from './path-normalizer';
+import {PathNormalizer} from './path-normalizer';
 import {describe, it, expect, beforeEach, afterEach} from '@jest/globals';
+import {Settings} from '../types/settings'
 
 describe('PathNormalizer', () => {
     let originalBuildSourcesDirectory: string | undefined;
@@ -14,27 +15,39 @@ describe('PathNormalizer', () => {
         process.env.BUILD_SOURCESDIRECTORY = originalBuildSourcesDirectory;
     });
 
-    it('should normalize file path by removing BUILD_SOURCESDIRECTORY', () => {
+    it('should normalize file path by removing Settings.Environment.sourcesDirectory', () => {
         // Arrange
-        process.env.BUILD_SOURCESDIRECTORY = '/source/';
+        const mockSettings = {
+            Environment: {
+                sourcesDirectory: '/source'
+            }
+        } as unknown as Settings;
+
         const filePath = '/source/folder/file.txt';
+        const normalizer = new PathNormalizer(mockSettings);
 
         // Act
-        const normalized = PathNormalizer.normalizeFilePath(filePath);
+        const normalized = normalizer.normalizeFilePath(filePath);
 
         // Assert
-        expect(normalized).toBe('folder/file.txt');
+        expect(normalized).toBe('/folder/file.txt');
     });
 
-    it('should return same path if BUILD_SOURCESDIRECTORY is not found in path', () => {
+    it('should normalize file path and always keep a /', () => {
         // Arrange
-        process.env.BUILD_SOURCESDIRECTORY = '/source/';
-        const filePath = '/another/folder/file.txt';
+        const mockSettings = {
+            Environment: {
+                sourcesDirectory: '/source/'
+            }
+        } as unknown as Settings;
+
+        const filePath = '/source/folder/file.txt';
+        const normalizer = new PathNormalizer(mockSettings);
 
         // Act
-        const normalized = PathNormalizer.normalizeFilePath(filePath);
+        const normalized = normalizer.normalizeFilePath(filePath);
 
         // Assert
-        expect(normalized).toBe('/another/folder/file.txt');
+        expect(normalized).toBe('/folder/file.txt');
     });
 });

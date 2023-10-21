@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, it, jest} from '@jest/globals';
 jest.mock('./base-git-api-service', () => {
     return {
         BaseGitApiService: {
-            getGitApi: jest.fn().mockReturnValue({ }),
+            getGitApi: jest.fn().mockReturnValue({}),
         },
     };
 });
@@ -24,7 +24,8 @@ describe('PullRequestService', () => {
             createThread: jest.fn(),
             updateThread: jest.fn(),
             getThreads: jest.fn(),
-            getPullRequestCommits: jest.fn(),
+            getCommitDiffs: jest.fn(),
+            getPullRequest: jest.fn(),
             createPullRequestStatus: jest.fn(),
             getPullRequestIterations: jest.fn()
         } as unknown as jest.Mocked<IGitApi>;
@@ -35,7 +36,8 @@ describe('PullRequestService', () => {
                 repoId: 'mockRepoId',
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
-                token: 'mockToken'
+                token: 'mockToken',
+                sourcesDirectory: '/src'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',
@@ -85,9 +87,71 @@ describe('PullRequestService', () => {
         expect(mockGitApi.createPullRequestStatus).toBeCalled();  // Add more assertions based on your logic
     });
 
-    it('should getPullRequestCommits correctly', async () => {
-        await service.getPullRequestCommits();
-        expect(mockGitApi.getPullRequestCommits).toBeCalled();
+    it('should getPullRequestChanges correctly', async () => {
+        (mockGitApi.getPullRequest as jest.Mock).mockReturnValue({
+            pullRequestId: settings.Environment.pullRequestId,
+            repository: {
+                id: settings.Environment.repoId
+            },
+            sourceRefName: 'sourceRef',
+            targetRefName: 'targetRef',
+        });
+
+        let mockReturnValue = {
+            changeCounts: {
+                edit: 2,
+                add: 3,
+                delete: 1
+            },
+            changes: [
+                {
+                    changeType: gi.VersionControlChangeType.Edit,
+                    item: {
+                        path: '/path1',
+                    },
+                },
+                {
+                    changeType: gi.VersionControlChangeType.Edit,
+                    item: {
+                        path: '/path2',
+                    },
+                },
+                {
+                    changeType: gi.VersionControlChangeType.Add,
+                    item: {
+                        path: '/path3',
+                    },
+                },
+                {
+                    changeType: gi.VersionControlChangeType.Add,
+                    item: {
+                        path: '/path4',
+                    },
+                },
+                {
+                    changeType: gi.VersionControlChangeType.Add,
+                    item: {
+                        path: '/path5',
+                    },
+                },
+                {
+                    changeType: gi.VersionControlChangeType.Delete,
+                    item: {
+                        path: '/path6',
+                    },
+                },
+            ],
+            diffCommonCommit: {
+                commitId: 'mockCommitId'
+            }
+        };
+
+        (mockGitApi.getCommitDiffs as jest.Mock).mockReturnValue(mockReturnValue);
+
+        const changes = await service.getPullRequestChanges();
+
+        expect(mockGitApi.getCommitDiffs).toBeCalled();
+        expect(changes).toBe(mockReturnValue.changes);
     });
 
     it('should getThreads correctly', async () => {
@@ -123,7 +187,8 @@ describe('getPullRequestService function', () => {
                 repoId: 'mockRepoId',
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
-                token: 'mockToken'
+                token: 'mockToken',
+                sourcesDirectory: '/src'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',
@@ -140,7 +205,7 @@ describe('getPullRequestService function', () => {
             }
         };
     });
-    
+
     it('should return a new PullRequestService instance', async () => {
         const result = await getPullRequestService(settings);
         expect(result).toBeInstanceOf(PullRequestService);

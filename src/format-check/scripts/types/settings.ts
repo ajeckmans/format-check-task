@@ -42,7 +42,10 @@ export const getSettings = (): Settings => {
                 throw new Error("SYSTEM_TEAMPROJECTID is not set.");
             })(),
             pullRequestId: pullRequestId,
-            token: process.env.SYSTEM_ACCESSTOKEN!
+            token: process.env.SYSTEM_ACCESSTOKEN!,
+            sourcesDirectory: process.env.BUILD_SOURCESDIRECTORY || (() => {
+                throw new Error("BUILD_SOURCESDIRECTORY is not set.");
+            })(),
         },
         Parameters: {
             solutionPath: process.env.INPUT_SOLUTIONPATH!,
@@ -76,6 +79,7 @@ export const getSettings = (): Settings => {
     console.log(`RepoId: ${settings.Environment.repoId}`);
     console.log(`ProjectId: ${settings.Environment.projectId}`);
     console.log(`PullRequestId: ${settings.Environment.pullRequestId}`);
+    console.log(`Sources Directory: ${settings.Environment.sourcesDirectory}`);
 
     if (!settings.Parameters.solutionPath?.trim()) {
         console.error("SolutionPath is not set.");
