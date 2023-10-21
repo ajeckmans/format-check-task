@@ -92,7 +92,8 @@ describe('runFormatCheck', () => {
             repoId: "rrrrr",
             projectId: "ppppp",
             pullRequestId: 123,
-            token: "some-token-secret"
+            token: "some-token-secret",
+            sourcesDirectory: '/src'
         },
         Parameters: {
             statusCheck: true,
@@ -203,7 +204,7 @@ describe('runFormatCheck', () => {
                 {
                     changeType: VersionControlChangeType.Edit,
                     item: {
-                        path: "/src/somefile.ts",
+                        path: "/somefile.ts",
                         commitId: randomUUID()
                     } as GitItem
                 }
@@ -229,7 +230,7 @@ describe('runFormatCheck', () => {
         // expect the first call to be for '/src/somefile.ts'
         expect(firstArg).toMatchObject({
             threadContext: expect.objectContaining({
-                filePath: expect.stringContaining('/src/somefile.ts')
+                filePath: expect.stringContaining('/somefile.ts')
             })
         });
 
