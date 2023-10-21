@@ -98,9 +98,17 @@ export class PullRequestService {
      * made in the pull request. If there are no changes, an empty array is returned.
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
-        let pr = await this.gitApi.getPullRequest(this.settings.Environment.repoId,
-            this.settings.Environment.pullRequestId,
-            this.settings.Environment.projectId);
+        let pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
+        const targetRefs = await this.gitApi.getRefs(this.settings.Environment.repoId, this.settings.Environment.projectId, `refs/heads/${pr.targetRefName}`);
+
+        if (targetRefs.length === 0) {
+            console.error(`⚠️ Target ref not found.`);
+            return [];
+        }
+
+        const latestTargetCommitId = targetRefs[0].objectId;
+        const latestSourceCommitId = pr.lastMergeSourceCommit?.commitId;
+
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
             this.settings.Environment.projectId,
@@ -108,17 +116,22 @@ export class PullRequestService {
             undefined,
             undefined,
             {
-                baseVersion: pr.lastMergeSourceCommit?.commitId,
+                baseVersion: latestSourceCommitId,
                 baseVersionOptions: GitVersionOptions.None,
                 baseVersionType: GitVersionType.Commit
             },
             {
-                targetVersion: pr.lastMergeTargetCommit?.commitId,
+                targetVersion: latestTargetCommitId,
                 targetVersionOptions: GitVersionOptions.None,
                 targetVersionType: GitVersionType.Commit
             });
 
-        return commitDiffs.changes || [];
+        let changes = commitDiffs.changes || [];
+
+        console.log("Pull request changes: ");
+        changes.forEach(change => console.log(`${change.item?.path} - ${change.changeType ? gi.VersionControlChangeType[change.changeType] : 'unknown'} - ${change.item?.commitId}`));
+
+        return changes;
     }
 
     /**

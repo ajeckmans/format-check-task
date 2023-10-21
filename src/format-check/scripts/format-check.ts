@@ -99,10 +99,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
 async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
     let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
-
-    console.log("Pull request changes: ");
-    pullRequestChanges.forEach(change => console.log(`${change.item?.path} - ${change.changeType ? gi.VersionControlChangeType[change.changeType] : 'unknown'} - ${change.item?.commitId}`));
-
+    
     // filter on changes that actually are important for format changes
     pullRequestChanges = pullRequestChanges.filter(change =>
         change.changeType === gi.VersionControlChangeType.Add ||
