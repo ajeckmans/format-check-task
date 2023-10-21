@@ -13,4 +13,6 @@ export class Environment {
     pullRequestId!: number;
     token?: string;
     sourcesDirectory!: string;
+    pullRequestSourceCommit!: string;
+    pullRequestTargetBranch!: string;
 }
