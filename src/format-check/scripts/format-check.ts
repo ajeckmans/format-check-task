@@ -42,7 +42,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
     let annotatedReports = reports.map(r => {
         return {
             ...r,
-            FilePath: PathNormalizer.normalizeFilePath(r.FilePath),
+            FilePath: new PathNormalizer(settings).normalizeFilePath(r.FilePath),
             commitId: '',
             changeType: gi.VersionControlChangeType.None
         };
@@ -50,7 +50,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
 
     if (settings.Parameters.scopeToPullRequest) {
         console.log("Scoping to Pull Request.");
-        let changedInPR = await getChangedFilesInPR(pullRequestService);
+        let changedInPR = await getChangedFilesInPR(pullRequestService, settings);
 
         annotatedReports = annotatedReports.map(report => {
             let change = changedInPR.find(c => c.FilePath === report.FilePath);
@@ -89,14 +89,14 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
  * all pull request file changes with respect to their commits it handles.
  *
  * @param {PullRequestService} pullRequestUtils - An instance of PullRequestService to interact with Pull Request API
- *
+ * @param {Settings} settings
  * @return {Promise<PullRequestFileChanges>} - Returns a Promise that resolves to an array of file changes.
  * Each record denotes a path, commit id and change type in a file as a result of a commit.
  *
  * @description
  * Function operates asynchronously, because of the nature of its service calls to GitService and PullRequestService.
  */
-async function getChangedFilesInPR(pullRequestUtils: PullRequestService): Promise<PullRequestFileChanges> {
+async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
     let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
 
@@ -119,7 +119,7 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService): Promis
             continue;
         }
 
-        let normalizedPath = PathNormalizer.normalizeFilePath(change.item!.path);
+        let normalizedPath = new PathNormalizer(settings).normalizeFilePath(change.item!.path);
         files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!));
     }
 

@@ -36,7 +36,8 @@ describe('PullRequestService', () => {
                 repoId: 'mockRepoId',
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
-                token: 'mockToken'
+                token: 'mockToken',
+                sourcesDirectory: '/src'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',
@@ -186,7 +187,8 @@ describe('getPullRequestService function', () => {
                 repoId: 'mockRepoId',
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
-                token: 'mockToken'
+                token: 'mockToken',
+                sourcesDirectory: '/src'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',

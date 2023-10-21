@@ -11,6 +11,7 @@ import * as fs from "fs";
 import {randomUUID} from 'crypto';
 import {FormatReports} from './types/format-report';
 import * as child_process from "child_process";
+import {PathNormalizer} from "./utils/path-normalizer";
 
 jest.mock('fs');
 jest.mock('child_process');
@@ -24,6 +25,12 @@ describe('getChangedFilesInPR', () => {
     const pullRequestServiceMock = {
         getPullRequestChanges: jest.fn()
     } as unknown as PullRequestService;
+
+    const settingsMock = {
+        Environment: {
+            sourcesDirectory: "/path/to"
+        }
+    } as unknown as Settings;
 
     beforeEach(() => {
         jest.resetAllMocks();
@@ -48,7 +55,7 @@ describe('getChangedFilesInPR', () => {
         (pullRequestServiceMock.getPullRequestChanges as jest.Mock).mockReturnValue(changesListMock);
 
         // Act
-        const result = await getChangedFilesInPR(pullRequestServiceMock);
+        const result = await getChangedFilesInPR(pullRequestServiceMock, settingsMock);
 
         // Assert
         expect(result).toHaveLength(1);
@@ -56,7 +63,6 @@ describe('getChangedFilesInPR', () => {
     });
 
     it('should console warn if a change does not have a path', async () => {
-
         // Arrange
         const changesListMock = [
             {
@@ -71,7 +77,7 @@ describe('getChangedFilesInPR', () => {
         (pullRequestServiceMock.getPullRequestChanges as jest.Mock).mockReturnValue(changesListMock);
 
         // Act
-        await getChangedFilesInPR(pullRequestServiceMock);
+        await getChangedFilesInPR(pullRequestServiceMock, settingsMock);
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith("Warning: File path is undefined for commit id commit123");

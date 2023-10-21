@@ -20,7 +20,8 @@ describe('BaseGitApiService', () => {
                 repoId: 'mockRepoId',
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
-                token: 'mockToken'
+                token: 'mockToken',
+                sourcesDirectory: '/src'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',

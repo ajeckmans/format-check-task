@@ -29,6 +29,7 @@ describe('getSettings', () => {
         process.env.SYSTEM_TEAMPROJECTID = 'projectId';
         process.env.SYSTEM_ACCESSTOKEN = 'token';
         process.env.INPUT_SOLUTIONPATH = 'solutionPath';
+        process.env.BUILD_SOURCESDIRECTORY = '/src';
 
         getSettings();
 

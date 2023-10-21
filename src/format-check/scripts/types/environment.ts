@@ -12,4 +12,5 @@ export class Environment {
     projectId!: string;
     pullRequestId!: number;
     token?: string;
+    sourcesDirectory!: string;
 }
