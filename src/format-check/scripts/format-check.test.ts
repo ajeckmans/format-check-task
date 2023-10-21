@@ -1,5 +1,5 @@
 import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
-import {GitItem, VersionControlChangeType} from 'azure-devops-node-api/interfaces/GitInterfaces';
+import {GitItem, GitRef, VersionControlChangeType} from 'azure-devops-node-api/interfaces/GitInterfaces';
 import {beforeEach, describe, expect, it, jest} from '@jest/globals';
 import {PullRequestService} from './services/pull-request-service';
 import {PullRequestFileChange} from './types/pull-request-file-change';
@@ -11,7 +11,6 @@ import * as fs from "fs";
 import {randomUUID} from 'crypto';
 import {FormatReports} from './types/format-report';
 import * as child_process from "child_process";
-import {PathNormalizer} from "./utils/path-normalizer";
 
 jest.mock('fs');
 jest.mock('child_process');
@@ -116,11 +115,13 @@ describe('runFormatCheck', () => {
             updatePullRequest: jest.fn(),
             getPullRequestIterations: jest.fn(),
             getPullRequest: jest.fn(),
+            getPullRequestById: jest.fn(),
             getCommitDiffs: jest.fn(),
             createPullRequestStatus: jest.fn(),
             getThreads: jest.fn(),
             createThread: jest.fn(),
-            updateThread: jest.fn()
+            updateThread: jest.fn(),
+            getRefs: jest.fn()
         } as unknown as jest.Mocked<IGitApi>;
     });
 
@@ -190,7 +191,7 @@ describe('runFormatCheck', () => {
             }
         ]);
 
-        (mockGitApi.getPullRequest as jest.Mock).mockReturnValue(Promise.resolve({
+        (mockGitApi.getPullRequestById as jest.Mock).mockReturnValue(Promise.resolve({
             status: 'active',
             createdBy: {
                 displayName: 'Test User',
@@ -198,6 +199,10 @@ describe('runFormatCheck', () => {
             },
             creationDate: new Date()
         }));
+
+        (mockGitApi.getRefs as jest.Mock).mockReturnValue(Promise.resolve([{
+            objectId: 'refs/heads/feature/test'
+        } as GitRef]));
 
         (mockGitApi.getCommitDiffs as jest.Mock).mockReturnValue(Promise.resolve({
             changes: [

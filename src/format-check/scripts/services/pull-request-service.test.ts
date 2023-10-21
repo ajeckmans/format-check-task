@@ -25,9 +25,10 @@ describe('PullRequestService', () => {
             updateThread: jest.fn(),
             getThreads: jest.fn(),
             getCommitDiffs: jest.fn(),
-            getPullRequest: jest.fn(),
+            getPullRequestById: jest.fn(),
             createPullRequestStatus: jest.fn(),
-            getPullRequestIterations: jest.fn()
+            getPullRequestIterations: jest.fn(),
+            getRefs: jest.fn()
         } as unknown as jest.Mocked<IGitApi>;
 
         settings = {
@@ -88,14 +89,18 @@ describe('PullRequestService', () => {
     });
 
     it('should getPullRequestChanges correctly', async () => {
-        (mockGitApi.getPullRequest as jest.Mock).mockReturnValue({
+        (mockGitApi.getPullRequestById as jest.Mock).mockReturnValue({
             pullRequestId: settings.Environment.pullRequestId,
             repository: {
                 id: settings.Environment.repoId
             },
-            sourceRefName: 'sourceRef',
+            sourceRefName: 'refs/heads/feature/test',
             targetRefName: 'targetRef',
         });
+
+        (mockGitApi.getRefs as jest.Mock).mockReturnValue(Promise.resolve([{
+            objectId: 'some-id'
+        }]));
 
         let mockReturnValue = {
             changeCounts: {
