@@ -1,5 +1,5 @@
 import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
-import {GitItem, GitRef, VersionControlChangeType} from 'azure-devops-node-api/interfaces/GitInterfaces';
+import {GitItem, VersionControlChangeType} from 'azure-devops-node-api/interfaces/GitInterfaces';
 import {beforeEach, describe, expect, it, jest} from '@jest/globals';
 import {PullRequestService} from './services/pull-request-service';
 import {PullRequestFileChange} from './types/pull-request-file-change';
@@ -87,7 +87,7 @@ describe('runFormatCheck', () => {
     let mockGitApi: jest.Mocked<IGitApi>;
     const mockSettings = {
         Environment: {
-            orgUrl: "some-url",
+            orgUrl: "https://some-url/",
             repoId: "rrrrr",
             projectId: "ppppp",
             pullRequestId: 123,
@@ -118,12 +118,10 @@ describe('runFormatCheck', () => {
             getPullRequestIterations: jest.fn(),
             getPullRequest: jest.fn(),
             getPullRequestById: jest.fn(),
-            getCommitDiffs: jest.fn(),
             createPullRequestStatus: jest.fn(),
             getThreads: jest.fn(),
             createThread: jest.fn(),
-            updateThread: jest.fn(),
-            getRefs: jest.fn()
+            updateThread: jest.fn()
         } as unknown as jest.Mocked<IGitApi>;
     });
 
@@ -202,11 +200,7 @@ describe('runFormatCheck', () => {
             creationDate: new Date()
         }));
 
-        (mockGitApi.getRefs as jest.Mock).mockReturnValue(Promise.resolve([{
-            objectId: 'refs/heads/feature/test'
-        } as GitRef]));
-
-        (mockGitApi.getCommitDiffs as jest.Mock).mockReturnValue(Promise.resolve({
+        let mockGitCommitDiffs = {
             changes: [
                 {
                     changeType: VersionControlChangeType.Edit,
@@ -216,7 +210,13 @@ describe('runFormatCheck', () => {
                     } as GitItem
                 }
             ]
-        } as gi.GitCommitDiffs));
+        } as gi.GitCommitDiffs;
+
+        const mockJson = jest.fn(() => Promise.resolve(mockGitCommitDiffs));
+        const mockResponse: Partial<Response> = {
+            json: mockJson,
+        };
+        global.fetch = jest.fn(() => Promise.resolve(mockResponse as Response));
 
         (mockGitApi.getThreads as jest.Mock).mockReturnValue(Promise.resolve([
             {

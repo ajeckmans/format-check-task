@@ -25,16 +25,14 @@ describe('PullRequestService', () => {
             createThread: jest.fn(),
             updateThread: jest.fn(),
             getThreads: jest.fn(),
-            getCommitDiffs: jest.fn(),
             getPullRequestById: jest.fn(),
             createPullRequestStatus: jest.fn(),
-            getPullRequestIterations: jest.fn(),
-            getRefs: jest.fn()
+            getPullRequestIterations: jest.fn()
         } as unknown as jest.Mocked<IGitApi>;
 
         settings = {
             Environment: {
-                orgUrl: 'mockOrgUrl',
+                orgUrl: 'https://mockOrgUrl/',
                 repoId: 'mockRepoId',
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
@@ -101,10 +99,6 @@ describe('PullRequestService', () => {
             targetRefName: 'targetRef',
         });
 
-        (mockGitApi.getRefs as jest.Mock).mockReturnValue(Promise.resolve([{
-            objectId: 'some-id'
-        }]));
-
         let mockReturnValue = {
             changeCounts: {
                 edit: 2,
@@ -154,11 +148,14 @@ describe('PullRequestService', () => {
             }
         };
 
-        (mockGitApi.getCommitDiffs as jest.Mock).mockReturnValue(mockReturnValue);
+        const mockJson = jest.fn(() => Promise.resolve(mockReturnValue));
+        const mockResponse: Partial<Response> = {
+            json: mockJson,
+        };
+        global.fetch = jest.fn(() => Promise.resolve(mockResponse as Response));
 
         const changes = await service.getPullRequestChanges();
 
-        expect(mockGitApi.getCommitDiffs).toBeCalled();
         expect(changes).toBe(mockReturnValue.changes);
     });
 

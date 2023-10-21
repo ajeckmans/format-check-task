@@ -115,10 +115,12 @@ export class PullRequestService {
                     'Authorization': `Basic ${btoa(`:${this.settings.Parameters.token}`)}`
                 }
             });
-        let data : gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
+        let commitDiffs : gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
+
+        let changes = commitDiffs.changes || [];
 
         console.log("Pull request changes: ");
-        data.forEach(change => console.log(`${change.item?.path} - ${change.changeType ? gi.VersionControlChangeType[change.changeType] : 'unknown'} - ${change.item?.commitId}`));
+        changes.forEach(change => console.log(`${change.item?.path} - ${change.changeType ? gi.VersionControlChangeType[change.changeType] : 'unknown'} - ${change.item?.commitId}`));
 
         return changes;
     }
