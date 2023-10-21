@@ -105,35 +105,20 @@ export class PullRequestService {
         let baseBranch = this.settings.Environment.pullRequestTargetBranch.replace('/refs/heads/', '');
         let targetBranch = pr.targetRefName?.replace('/refs/heads/', '');
 
-        let commitDiffs = await this.gitApi.getCommitDiffs(
-            this.settings.Environment.repoId,
-            this.settings.Environment.projectId,
-            true,
-            undefined,
-            undefined,
-            {
-                version: baseBranch,
-                versionType: GitVersionType.Branch,
-                versionOptions: GitVersionOptions.None,
-                baseVersion: baseBranch,
-                baseVersionType: GitVersionType.Branch,
-                baseVersionOptions: GitVersionOptions.None
-            },
-            {
-                version: targetBranch,
-                versionType: GitVersionType.Branch,
-                versionOptions: GitVersionOptions.None,
-                targetVersion: targetBranch,
-                targetVersionType: GitVersionType.Branch,
-                targetVersionOptions: GitVersionOptions.None
+
+        const response = await fetch(
+            `${this.settings.Environment.orgUrl}${this.settings.Environment.projectId}/` +
+            `_apis/git/repositories/${this.settings.Environment.repoId}/diffs/commits` +
+            `?api-version=7.1&baseVersion=${baseBranch}&targetVersion=${targetBranch}` +
+            `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`, {
+                headers: {
+                    'Authorization': `Basic ${btoa(`:${this.settings.Parameters.token}`)}`
+                }
             });
-
-        console.log(commitDiffs);
-
-        let changes = commitDiffs.changes || [];
+        let data : gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
 
         console.log("Pull request changes: ");
-        changes.forEach(change => console.log(`${change.item?.path} - ${change.changeType ? gi.VersionControlChangeType[change.changeType] : 'unknown'} - ${change.item?.commitId}`));
+        data.forEach(change => console.log(`${change.item?.path} - ${change.changeType ? gi.VersionControlChangeType[change.changeType] : 'unknown'} - ${change.item?.commitId}`));
 
         return changes;
     }
