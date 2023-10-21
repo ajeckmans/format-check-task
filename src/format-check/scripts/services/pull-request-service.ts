@@ -106,7 +106,7 @@ export class PullRequestService {
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
             this.settings.Environment.projectId,
-            false,
+            true,
             undefined,
             undefined,
             {
