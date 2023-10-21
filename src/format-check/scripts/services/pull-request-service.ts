@@ -98,10 +98,12 @@ export class PullRequestService {
      * made in the pull request. If there are no changes, an empty array is returned.
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
-
         console.log(`Checking for file changes between ${this.settings.Environment.pullRequestSourceCommit} and ${this.settings.Environment.pullRequestTargetBranch}`);
 
-        let targetBranch = this.settings.Environment.pullRequestTargetBranch.replace('/refs/heads/', '');
+        const pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
+
+        let baseBranch = this.settings.Environment.pullRequestTargetBranch.replace('/refs/heads/', '');
+        let targetBranch = pr.targetRefName?.replace('/refs/heads/', '');
 
         let commitDiffs = await this.gitApi.getCommitDiffs(
             this.settings.Environment.repoId,
@@ -110,19 +112,19 @@ export class PullRequestService {
             undefined,
             undefined,
             {
-                version: targetBranch,
+                version: baseBranch,
                 versionType: GitVersionType.Branch,
                 versionOptions: GitVersionOptions.None,
-                baseVersion: targetBranch,
+                baseVersion: baseBranch,
                 baseVersionType: GitVersionType.Branch,
                 baseVersionOptions: GitVersionOptions.None
             },
             {
-                version: this.settings.Environment.pullRequestSourceCommit,
-                versionType: GitVersionType.Commit,
+                version: targetBranch,
+                versionType: GitVersionType.Branch,
                 versionOptions: GitVersionOptions.None,
-                targetVersion: this.settings.Environment.pullRequestSourceCommit,
-                targetVersionType: GitVersionType.Commit,
+                targetVersion: targetBranch,
+                targetVersionType: GitVersionType.Branch,
                 targetVersionOptions: GitVersionOptions.None
             });
 
