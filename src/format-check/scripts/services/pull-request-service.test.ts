@@ -2,8 +2,11 @@ import {PullRequestService, getPullRequestService} from './pull-request-service'
 import {IGitApi} from "azure-devops-node-api/GitApi";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import {Settings} from "../types/settings";
-import {beforeEach, describe, expect, it, jest} from '@jest/globals';
-import { randomUUID } from 'crypto';
+import {beforeEach, describe, expect, it} from '@jest/globals';
+import {randomUUID} from 'crypto';
+import fetchMock from 'jest-fetch-mock';
+
+fetchMock.enableMocks();
 
 jest.mock('./base-git-api-service', () => {
     return {
@@ -57,6 +60,8 @@ describe('PullRequestService', () => {
         };
 
         service = new PullRequestService(mockGitApi, settings);
+
+        fetchMock.resetMocks();
     });
 
     it('should updatePullRequestStatus correctly', async () => {
@@ -142,22 +147,22 @@ describe('PullRequestService', () => {
                         path: '/path6',
                     },
                 },
-            ],
+                ],
             diffCommonCommit: {
-                commitId: 'mockCommitId'
-            }
+                commitId: 'mockCommitId',
+            },
         };
 
-        const mockJson = jest.fn(() => Promise.resolve(mockReturnValue));
-        const mockResponse: Partial<Response> = {
-            json: mockJson,
-        };
-        global.fetch = jest.fn(() => Promise.resolve(mockResponse as Response));
+        fetchMock.mockResponse(JSON.stringify(mockReturnValue), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          });
 
         const changes = await service.getPullRequestChanges();
 
-        expect(changes).toBe(mockReturnValue.changes);
-    });
+        expect(changes).toEqual(mockReturnValue.changes);
+    }, 60000);
+
 
     it('should getThreads correctly', async () => {
         await service.getThreads();

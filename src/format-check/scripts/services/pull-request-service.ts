@@ -3,7 +3,6 @@ import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import {GitPullRequestCommentThread} from "azure-devops-node-api/interfaces/GitInterfaces";
 import {Settings} from "../types/settings";
 import {BaseGitApiService} from "./base-git-api-service";
-import fetch from 'node-fetch';
 
 /**
  * PullRequestService class is a service that offers methods to interact with pull requests.
