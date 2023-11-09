@@ -1,16 +1,5 @@
-import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
-import {GitItem, VersionControlChangeType} from 'azure-devops-node-api/interfaces/GitInterfaces';
-import {beforeEach, describe, expect, it, jest} from '@jest/globals';
-import {PullRequestService} from './services/pull-request-service';
-import {PullRequestFileChange} from './types/pull-request-file-change';
-import {getChangedFilesInPR, runFormatCheck} from "./format-check";
-import {Settings} from './types/settings';
-import {BaseGitApiService} from './services/base-git-api-service';
-import {IGitApi} from 'azure-devops-node-api/GitApi';
-import * as fs from "fs";
-import {randomUUID} from 'crypto';
-import {FormatReports} from './types/format-report';
-import * as child_process from "child_process";
+import fetch from 'jest-fetch-mock';
+fetch.enableMocks();
 
 jest.mock('fs');
 jest.mock('child_process');
@@ -18,6 +7,20 @@ jest.mock('process');
 jest.mock('console', () => ({
     error: jest.fn(),
 }));
+
+import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
+import { GitItem, VersionControlChangeType } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { PullRequestService } from './services/pull-request-service';
+import { PullRequestFileChange } from './types/pull-request-file-change';
+import { getChangedFilesInPR, runFormatCheck } from "./format-check";
+import { Settings } from './types/settings';
+import { BaseGitApiService } from './services/base-git-api-service';
+import { IGitApi } from 'azure-devops-node-api/GitApi';
+import fs from "fs";
+import { randomUUID } from 'crypto';
+import { FormatReports } from './types/format-report';
+import * as child_process from "child_process";
 
 describe('getChangedFilesInPR', () => {
     // mock PullRequestService
@@ -164,7 +167,11 @@ describe('runFormatCheck', () => {
                 ]
             }
         ];
-        (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockReport));
+
+        (fs.readFileSync as jest.Mock).mockImplementation(() => JSON.stringify(mockReport));
+        (fs.unlinkSync as jest.Mock).mockImplementation(() => { });
+        (fs.existsSync as jest.Mock).mockImplementation(() => true);
+
 
         (mockGitApi.updatePullRequest as jest.Mock).mockImplementation(jest.fn());
         (mockGitApi.getPullRequestIterations as jest.Mock).mockReturnValueOnce([
@@ -212,11 +219,12 @@ describe('runFormatCheck', () => {
             ]
         } as gi.GitCommitDiffs;
 
-        const mockJson = jest.fn(() => Promise.resolve(mockGitCommitDiffs));
-        const mockResponse: Partial<Response> = {
-            json: mockJson,
-        };
-        global.fetch = jest.fn(() => Promise.resolve(mockResponse as Response));
+        let response = JSON.stringify(mockGitCommitDiffs)
+
+        fetch.doMock(response, {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+        });
 
         (mockGitApi.getThreads as jest.Mock).mockReturnValue(Promise.resolve([
             {

@@ -1,11 +1,11 @@
 {
   "dependencies": {
+    "@types/jest": "^29.5.8",
     "@types/node": "^20.8.2",
     "@types/node-fetch": "^2.6.7",
     "azure-devops-node-api": "^12.1.0",
     "dotenv": "^16.3.1",
-    "node-fetch": "^2.7.0",
-    "@types/jest": "^29.5.8"
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
@@ -19,6 +19,9 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFiles": [
+      "jest-fetch-mock/setupJest"
+    ]    
   }
 }
