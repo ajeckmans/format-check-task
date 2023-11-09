@@ -115,14 +115,9 @@ export class PullRequestService {
             }
         });
 
-            let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
+        let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
 
-        let changes = commitDiffs.changes || [];
-
-        console.log("Pull request changes: ");
-        changes.forEach(change => console.log(`${change.item?.path} - ${change.changeType} - ${change.item?.commitId}`));
-
-        return changes;
+        return commitDiffs.changes || [];
     }
 
     /**

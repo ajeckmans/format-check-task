@@ -113,7 +113,7 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
     }
 
     console.log("All changed files considered to be part of this Pull Request: ");
-    files.forEach(file => console.log(`${file.FilePath} - ${gi.VersionControlChangeType[file.changeType]} - ${file.CommitId}`));
+    files.forEach(file => console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}`));
     return files;
 }
 
@@ -164,7 +164,7 @@ async function updatePullRequestThreads(
                 };
                 await pullRequestService.updateThread(thread, existingThread.id);
             } else {
-                console.log("📝 Creating new thread for file ${report.FilePath} .");
+                console.log(`📝 Creating new thread for file ${report.FilePath}.`);
                 const thread = <gi.GitPullRequestCommentThread>{
                     comments: [comment],
                     status: gi.CommentThreadStatus.Active,
