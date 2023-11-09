@@ -102,6 +102,8 @@ export class PullRequestService {
         let baseBranch = this.settings.Environment.pullRequestTargetBranch.replace('/refs/heads/', '');
         let targetBranch = pr.targetRefName?.replace('/refs/heads/', '');
 
+        const token = this.settings.Parameters.token;
+        const encodedToken = Buffer.from(`:${token}`).toString('base64');
 
         const response = await fetch(
             `${this.settings.Environment.orgUrl}${this.settings.Environment.projectId}/` +
@@ -109,7 +111,7 @@ export class PullRequestService {
             `?api-version=7.1&baseVersion=${baseBranch}&targetVersion=${targetBranch}` +
             `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`, {
                 headers: {
-                    'Authorization': `Basic ${btoa(`:${this.settings.Parameters.token}`)}`
+                    'Authorization': `Basic ${encodedToken}`
                 }
             });
         let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
