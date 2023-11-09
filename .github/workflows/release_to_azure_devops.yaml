@@ -13,104 +13,101 @@ jobs:
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     defaults:
-            run:
-                shell: bash -e {0}
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v2
+      run:
+        shell: bash -e {0}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-            - name: Setup Node.js environment
-              uses: actions/setup-node@v2
-              with:
-                  node-version: 'lts/*'
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
+        with:
+          node-version: 'lts/*'
 
-            - name: Set version (tag push)
-              if: startsWith(github.ref, 'refs/tags/v')
-              run: |
-                  VERSION=${GITHUB_REF#refs/tags/v}
-                  echo "EXT_VERSION=${VERSION}" >> $GITHUB_ENV
+      - name: Set version (tag push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "EXT_VERSION=${VERSION}" >> $GITHUB_ENV
 
-            - name: Set version (PR)
-              if: github.event_name == 'pull_request'
-              run: |
-                  git fetch --tags
+      - name: Set version (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --tags
 
-                  LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-                  echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
-                  IFS='.' read -ra VERSION_PARTS <<< "$LATEST_TAG"
-                  MAJOR=${VERSION_PARTS[0]#v}
-                  MINOR=${VERSION_PARTS[1]}
-                  PATCH=${VERSION_PARTS[2]}
+          IFS='.' read -ra VERSION_PARTS <<< "$LATEST_TAG"
+          MAJOR=${VERSION_PARTS[0]#v}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
 
-                  NEXT_MINOR=$((MINOR + 1))
+          NEXT_MINOR=$((MINOR + 1))
 
-                  NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.${PATCH}"
-                  echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
+          NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.${PATCH}"
+          echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
 
-                  SHORT_RUN_ID=$((${{ github.run_id }} % 2147483647))
-                  EXT_VERSION="${MAJOR}.${MINOR}.${PATCH}.${SHORT_RUN_ID}"
-                  echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
+          SHORT_RUN_ID=$((${{ github.run_id }} % 2147483647))
+          EXT_VERSION="${MAJOR}.${MINOR}.${PATCH}.${SHORT_RUN_ID}"
+          echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
 
-            - name: Restore npm packages
-              run: npm ci
-              working-directory: src/format-check
+      - name: Restore npm packages
+        run: npm ci
+        working-directory: src/format-check
 
-            - name: Run Tests
-              run: npm run test
-              working-directory: src/format-check
+      - name: Run Tests
+        run: npm run test
+        working-directory: src/format-check
 
-            - name: Update task version
-              run: node ../../.github/workflows/update-task-version.js ${{ env.EXT_VERSION }} task.json
-              working-directory: src/format-check
+      - name: Update task version
+        run: node ../../.github/workflows/update-task-version.js ${{ env.EXT_VERSION }} task.json
+        working-directory: src/format-check
 
-            - name: Clean dev dependencies
-              run: npm prune --production
-              working-directory: src/format-check
+      - name: Clean dev dependencies
+        run: npm prune --production
+        working-directory: src/format-check
 
-            - name: Remove .test.ts files
-              run: find . -type f -name "*.test.ts" -delete
-              working-directory: src/format-check
+      - name: Remove .test.ts files
+        run: find . -type f -name "*.test.ts" -delete
+        working-directory: src/format-check
 
-            - name: Compile TypeScript
-              run: tsc
-              working-directory: src/format-check
+      - name: Compile TypeScript
+        run: tsc
+        working-directory: src/format-check
 
+      - name: Install tfx-cli
+        run: npm install -g tfx-cli
 
-            - name: Install tfx-cli
-              run: npm install -g tfx-cli
+      - name: Package Extension
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            sed -i 's/"id": "format-check"/"id": "format-check-private"/g' vss-extension.json
+            sed -i 's/"name": "Format Check dotnet"/"name": "Format Check dotnet (Private Test Version)"/g' vss-extension.json
+            tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\", \"public\": false}"
+          else
+            tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
+          fi
+        working-directory: src
 
-            - name: Package Extension
-              run: |
-                  if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-                    sed -i 's/"id": "format-check"/"id": "format-check-private"/g' vss-extension.json
-                    sed -i 's/"name": "Format Check dotnet"/"name": "Format Check dotnet (Private Test Version)"/g' vss-extension.json
-                    tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\", \"public\": false}"
-                  else
-                    tfx extension create --manifests vss-extension.json --override "{\"version\": \"${{ env.EXT_VERSION }}\"}"
-                  fi
-              working-directory: src
+      - name: Publish to Azure DevOps Marketplace
+        id: publish
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            tfx extension publish --vsix ajeckmans.format-check-private-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGANIZATION }}
+          else
+            tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }}
+          fi
+        working-directory: src
 
-            - name: Publish to Azure DevOps Marketplace
-              id: publish
-              run: |
-                  if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-                    tfx extension publish --vsix ajeckmans.format-check-private-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGANIZATION }}
-                  else
-                    tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }}
-                  fi
-              working-directory: src
-
-            - name: Create GitHub Release
-              id: create_release
-              if: github.event_name != 'pull_request'
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: ${{ github.event_name == 'pull_request' && 'Prerelease' || 'Release' }} ${{ env.EXT_VERSION }}
-                  draft: ${{ github.event_name == 'pull_request' }}
-                  prerelease: ${{ github.event_name == 'pull_request' }}
-
-
+      - name: Create GitHub Release
+        id: create_release
+        if: github.event_name != 'pull_request'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.event_name == 'pull_request' && 'Prerelease' || 'Release' }} ${{ env.EXT_VERSION }}
+          draft: ${{ github.event_name == 'pull_request' }}
+          prerelease: ${{ github.event_name == 'pull_request' }}
