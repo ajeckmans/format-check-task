@@ -99,8 +99,8 @@ export class PullRequestService {
 
         const pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
 
-        let baseBranch = this.settings.Environment.pullRequestTargetBranch.replace('/refs/heads/', '');
-        let targetBranch = pr.targetRefName?.replace('/refs/heads/', '');
+        let sourceRefName = pr.sourceRefName?.replace('/refs/heads/', '');
+        let targetRefName = pr.targetRefName?.replace('/refs/heads/', '');
 
         const token = this.settings.Parameters.token;
         const encodedToken = Buffer.from(`:${token}`).toString('base64');
@@ -108,7 +108,7 @@ export class PullRequestService {
         const response = await fetch(
             `${this.settings.Environment.orgUrl}${this.settings.Environment.projectId}/` +
             `_apis/git/repositories/${this.settings.Environment.repoId}/diffs/commits` +
-            `?api-version=7.1&baseVersion=${baseBranch}&targetVersion=${targetBranch}` +
+            `?api-version=7.1&baseVersion=${sourceRefName}&targetVersion=${targetRefName}` +
             `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`, {
                 headers: {
                     'Authorization': `Basic ${encodedToken}`
