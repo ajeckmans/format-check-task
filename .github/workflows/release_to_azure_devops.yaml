@@ -13,19 +13,11 @@ jobs:
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     defaults:
-<<<<<<< HEAD
-            run:
-                shell: bash -e {0}
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v2
-=======
       run:
         shell: bash -e {0}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
->>>>>>> 278a24939db3f9591c2ae954e222a165773c8205
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v2
