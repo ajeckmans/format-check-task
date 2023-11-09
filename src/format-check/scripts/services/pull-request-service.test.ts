@@ -1,8 +1,5 @@
-import {PullRequestService, getPullRequestService} from './pull-request-service';
-import {IGitApi} from "azure-devops-node-api/GitApi";
-import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-import {Settings} from "../types/settings";
-import {beforeEach, describe, expect, it, jest} from '@jest/globals';
+import fetch from 'jest-fetch-mock';
+fetch.enableMocks();
 
 jest.mock('./base-git-api-service', () => {
     return {
@@ -12,6 +9,12 @@ jest.mock('./base-git-api-service', () => {
     };
 });
 
+import {PullRequestService, getPullRequestService} from './pull-request-service';
+import {IGitApi} from "azure-devops-node-api/GitApi";
+import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
+import {Settings} from "../types/settings";
+import {beforeEach, describe, expect, it} from '@jest/globals';
+import {randomUUID} from 'crypto';
 
 describe('PullRequestService', () => {
     let mockGitApi: jest.Mocked<IGitApi>;
@@ -24,20 +27,21 @@ describe('PullRequestService', () => {
             createThread: jest.fn(),
             updateThread: jest.fn(),
             getThreads: jest.fn(),
-            getCommitDiffs: jest.fn(),
-            getPullRequest: jest.fn(),
+            getPullRequestById: jest.fn(),
             createPullRequestStatus: jest.fn(),
             getPullRequestIterations: jest.fn()
         } as unknown as jest.Mocked<IGitApi>;
 
         settings = {
             Environment: {
-                orgUrl: 'mockOrgUrl',
+                orgUrl: 'https://mockOrgUrl/',
                 repoId: 'mockRepoId',
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
                 token: 'mockToken',
-                sourcesDirectory: '/src'
+                sourcesDirectory: '/src',
+                pullRequestSourceCommit: randomUUID(),
+                pullRequestTargetBranch: '/refs/heads/main'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',
@@ -55,6 +59,8 @@ describe('PullRequestService', () => {
         };
 
         service = new PullRequestService(mockGitApi, settings);
+
+        fetch.resetMocks();
     });
 
     it('should updatePullRequestStatus correctly', async () => {
@@ -88,12 +94,12 @@ describe('PullRequestService', () => {
     });
 
     it('should getPullRequestChanges correctly', async () => {
-        (mockGitApi.getPullRequest as jest.Mock).mockReturnValue({
+        (mockGitApi.getPullRequestById as jest.Mock).mockReturnValue({
             pullRequestId: settings.Environment.pullRequestId,
             repository: {
                 id: settings.Environment.repoId
             },
-            sourceRefName: 'sourceRef',
+            sourceRefName: 'refs/heads/feature/test',
             targetRefName: 'targetRef',
         });
 
@@ -140,19 +146,22 @@ describe('PullRequestService', () => {
                         path: '/path6',
                     },
                 },
-            ],
+                ],
             diffCommonCommit: {
-                commitId: 'mockCommitId'
-            }
+                commitId: 'mockCommitId',
+            },
         };
 
-        (mockGitApi.getCommitDiffs as jest.Mock).mockReturnValue(mockReturnValue);
+        fetch.mockResponseOnce(JSON.stringify(mockReturnValue), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          });
 
         const changes = await service.getPullRequestChanges();
 
-        expect(mockGitApi.getCommitDiffs).toBeCalled();
-        expect(changes).toBe(mockReturnValue.changes);
+        expect(changes).toEqual(mockReturnValue.changes);
     });
+
 
     it('should getThreads correctly', async () => {
         await service.getThreads();
@@ -188,7 +197,9 @@ describe('getPullRequestService function', () => {
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
                 token: 'mockToken',
-                sourcesDirectory: '/src'
+                sourcesDirectory: '/src',
+                pullRequestSourceCommit: randomUUID(),
+                pullRequestTargetBranch: '/refs/heads/main'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',

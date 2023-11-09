@@ -1,12 +1,9 @@
-import {IGitApi} from "azure-devops-node-api/GitApi";
+import { IGitApi } from "azure-devops-node-api/GitApi";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-import {
-    GitPullRequestCommentThread,
-    GitVersionOptions,
-    GitVersionType
-} from "azure-devops-node-api/interfaces/GitInterfaces";
-import {Settings} from "../types/settings";
-import {BaseGitApiService} from "./base-git-api-service";
+import { GitPullRequestCommentThread } from "azure-devops-node-api/interfaces/GitInterfaces";
+import { Settings } from "../types/settings";
+import { BaseGitApiService } from "./base-git-api-service";
+import fetch from "node-fetch";
 
 /**
  * PullRequestService class is a service that offers methods to interact with pull requests.
@@ -98,25 +95,27 @@ export class PullRequestService {
      * made in the pull request. If there are no changes, an empty array is returned.
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
-        let pr = await this.gitApi.getPullRequest(this.settings.Environment.repoId,
-            this.settings.Environment.pullRequestId,
-            this.settings.Environment.projectId);
-        let commitDiffs = await this.gitApi.getCommitDiffs(
-            this.settings.Environment.repoId,
-            this.settings.Environment.projectId,
-            false,
-            undefined,
-            undefined,
-            {
-                baseVersion: pr.sourceRefName,
-                baseVersionOptions: GitVersionOptions.None,
-                baseVersionType: GitVersionType.Branch
-            },
-            {
-                targetVersion: pr.targetRefName,
-                targetVersionOptions: GitVersionOptions.None,
-                targetVersionType: GitVersionType.Branch
-            });
+        const pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
+        let sourceRefName = pr.sourceRefName?.replace('refs/heads/', '');
+        let targetRefName = pr.targetRefName?.replace('refs/heads/', '');
+
+        console.log(`Checking for file changes between ${sourceRefName} and ${targetRefName}`);
+
+        const token = this.settings.Parameters.token;
+        const encodedToken = Buffer.from(`:${token}`).toString('base64');
+
+        var url = `${this.settings.Environment.orgUrl}${this.settings.Environment.projectId}/` +
+            `_apis/git/repositories/${this.settings.Environment.repoId}/diffs/commits` +
+            `?api-version=7.1&baseVersion=${targetRefName}&targetVersion=${sourceRefName}` +
+            `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`;
+        console.log(`Fetching ${url}`);
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Basic ${encodedToken}`
+            }
+        });
+
+        let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
 
         return commitDiffs.changes || [];
     }

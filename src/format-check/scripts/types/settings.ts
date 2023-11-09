@@ -46,6 +46,12 @@ export const getSettings = (): Settings => {
             sourcesDirectory: process.env.BUILD_SOURCESDIRECTORY || (() => {
                 throw new Error("BUILD_SOURCESDIRECTORY is not set.");
             })(),
+            pullRequestSourceCommit: process.env.SYSTEM_PULLREQUEST_SOURCECOMMITID || (() => {
+                throw new Error("SYSTEM_PULLREQUEST_SOURCECOMMITID is not set.");
+            })(),
+            pullRequestTargetBranch: process.env.SYSTEM_PULLREQUEST_TARGETBRANCH || (() => {
+                throw new Error("SYSTEM_PULLREQUEST_TARGETBRANCH is not set.");
+            })(),
         },
         Parameters: {
             solutionPath: process.env.INPUT_SOLUTIONPATH!,

@@ -74,7 +74,6 @@ describe('FormatCheckRunner', () => {
                         DiagnosticId: randomUUID(),
                         LineNumber: 2,
                         FormatDescription: "some error"
-
                     }
                 ]
             }

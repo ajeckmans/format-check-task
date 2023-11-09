@@ -3,6 +3,7 @@ import {jest, describe, it, expect, beforeEach} from '@jest/globals';
 import {Settings} from "../types/settings";
 import {BaseGitApiService} from "./base-git-api-service";
 import {IGitApi} from "azure-devops-node-api/GitApi";
+import {randomUUID} from "crypto";
 
 // Explicitly cast to jest.Mock
 const MockedWebApi = azdev.WebApi as unknown as jest.Mock;
@@ -21,7 +22,9 @@ describe('BaseGitApiService', () => {
                 projectId: 'mockProjectId',
                 pullRequestId: 1,
                 token: 'mockToken',
-                sourcesDirectory: '/src'
+                sourcesDirectory: '/src',
+                pullRequestSourceCommit: randomUUID(),
+                pullRequestTargetBranch: '/refs/heads/main'
             },
             Parameters: {
                 solutionPath: 'mockSolutionPath',

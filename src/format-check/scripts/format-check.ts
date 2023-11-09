@@ -49,7 +49,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
     }) as AnnotatedReports;
 
     if (settings.Parameters.scopeToPullRequest) {
-        console.log("Scoping to Pull Request.");
+        console.log("Scoping issues to files part of the Pull Request.");
         let changedInPR = await getChangedFilesInPR(pullRequestService, settings);
 
         annotatedReports = annotatedReports.map(report => {
@@ -99,18 +99,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
 async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
     let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
-
-    // filter on changes that actually are important for format changes
-    pullRequestChanges = pullRequestChanges.filter(change =>
-        change.changeType === gi.VersionControlChangeType.Add ||
-        change.changeType === gi.VersionControlChangeType.Edit ||
-        change.changeType === gi.VersionControlChangeType.Encoding ||
-        change.changeType === gi.VersionControlChangeType.Rename ||
-        change.changeType === gi.VersionControlChangeType.SourceRename ||
-        change.changeType === gi.VersionControlChangeType.TargetRename ||
-        change.changeType === gi.VersionControlChangeType.Undelete
-    );
-
+    
     let files: PullRequestFileChanges = [];
 
     for (const change of pullRequestChanges) {
@@ -123,8 +112,8 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
         files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!));
     }
 
-    console.log("All changed files: ");
-    files.forEach(file => console.log(`${file.FilePath} - ${gi.VersionControlChangeType[file.changeType]} - ${file.CommitId}`));
+    console.log("All changed files considered to be part of this Pull Request: ");
+    files.forEach(file => console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}`));
     return files;
 }
 
@@ -175,7 +164,7 @@ async function updatePullRequestThreads(
                 };
                 await pullRequestService.updateThread(thread, existingThread.id);
             } else {
-                console.log("📝 Creating new thread for file ${report.FilePath} .");
+                console.log(`📝 Creating new thread for file ${report.FilePath}.`);
                 const thread = <gi.GitPullRequestCommentThread>{
                     comments: [comment],
                     status: gi.CommentThreadStatus.Active,

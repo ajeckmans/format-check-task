@@ -1,17 +1,5 @@
-import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
-import {GitItem, VersionControlChangeType} from 'azure-devops-node-api/interfaces/GitInterfaces';
-import {beforeEach, describe, expect, it, jest} from '@jest/globals';
-import {PullRequestService} from './services/pull-request-service';
-import {PullRequestFileChange} from './types/pull-request-file-change';
-import {getChangedFilesInPR, runFormatCheck} from "./format-check";
-import {Settings} from './types/settings';
-import {BaseGitApiService} from './services/base-git-api-service';
-import {IGitApi} from 'azure-devops-node-api/GitApi';
-import * as fs from "fs";
-import {randomUUID} from 'crypto';
-import {FormatReports} from './types/format-report';
-import * as child_process from "child_process";
-import {PathNormalizer} from "./utils/path-normalizer";
+import fetch from 'jest-fetch-mock';
+fetch.enableMocks();
 
 jest.mock('fs');
 jest.mock('child_process');
@@ -19,6 +7,20 @@ jest.mock('process');
 jest.mock('console', () => ({
     error: jest.fn(),
 }));
+
+import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
+import { GitItem, VersionControlChangeType } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { PullRequestService } from './services/pull-request-service';
+import { PullRequestFileChange } from './types/pull-request-file-change';
+import { getChangedFilesInPR, runFormatCheck } from "./format-check";
+import { Settings } from './types/settings';
+import { BaseGitApiService } from './services/base-git-api-service';
+import { IGitApi } from 'azure-devops-node-api/GitApi';
+import fs from "fs";
+import { randomUUID } from 'crypto';
+import { FormatReports } from './types/format-report';
+import * as child_process from "child_process";
 
 describe('getChangedFilesInPR', () => {
     // mock PullRequestService
@@ -88,12 +90,14 @@ describe('runFormatCheck', () => {
     let mockGitApi: jest.Mocked<IGitApi>;
     const mockSettings = {
         Environment: {
-            orgUrl: "some-url",
+            orgUrl: "https://some-url/",
             repoId: "rrrrr",
             projectId: "ppppp",
             pullRequestId: 123,
             token: "some-token-secret",
-            sourcesDirectory: '/src'
+            sourcesDirectory: '/src',
+            pullRequestSourceCommit: '123123132123',
+            pullRequestTargetBranch: '/refs/heads/main'
         },
         Parameters: {
             statusCheck: true,
@@ -116,7 +120,7 @@ describe('runFormatCheck', () => {
             updatePullRequest: jest.fn(),
             getPullRequestIterations: jest.fn(),
             getPullRequest: jest.fn(),
-            getCommitDiffs: jest.fn(),
+            getPullRequestById: jest.fn(),
             createPullRequestStatus: jest.fn(),
             getThreads: jest.fn(),
             createThread: jest.fn(),
@@ -163,7 +167,11 @@ describe('runFormatCheck', () => {
                 ]
             }
         ];
-        (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockReport));
+
+        (fs.readFileSync as jest.Mock).mockImplementation(() => JSON.stringify(mockReport));
+        (fs.unlinkSync as jest.Mock).mockImplementation(() => { });
+        (fs.existsSync as jest.Mock).mockImplementation(() => true);
+
 
         (mockGitApi.updatePullRequest as jest.Mock).mockImplementation(jest.fn());
         (mockGitApi.getPullRequestIterations as jest.Mock).mockReturnValueOnce([
@@ -190,7 +198,7 @@ describe('runFormatCheck', () => {
             }
         ]);
 
-        (mockGitApi.getPullRequest as jest.Mock).mockReturnValue(Promise.resolve({
+        (mockGitApi.getPullRequestById as jest.Mock).mockReturnValue(Promise.resolve({
             status: 'active',
             createdBy: {
                 displayName: 'Test User',
@@ -199,7 +207,7 @@ describe('runFormatCheck', () => {
             creationDate: new Date()
         }));
 
-        (mockGitApi.getCommitDiffs as jest.Mock).mockReturnValue(Promise.resolve({
+        let mockGitCommitDiffs = {
             changes: [
                 {
                     changeType: VersionControlChangeType.Edit,
@@ -209,7 +217,14 @@ describe('runFormatCheck', () => {
                     } as GitItem
                 }
             ]
-        } as gi.GitCommitDiffs));
+        } as gi.GitCommitDiffs;
+
+        let response = JSON.stringify(mockGitCommitDiffs)
+
+        fetch.doMock(response, {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+        });
 
         (mockGitApi.getThreads as jest.Mock).mockReturnValue(Promise.resolve([
             {
