@@ -100,17 +100,6 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
     console.log("Getting the PR commits...");
     let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
     
-    // filter on changes that actually are important for format changes
-    pullRequestChanges = pullRequestChanges.filter(change =>
-        change.changeType === gi.VersionControlChangeType.Add ||
-        change.changeType === gi.VersionControlChangeType.Edit ||
-        change.changeType === gi.VersionControlChangeType.Encoding ||
-        change.changeType === gi.VersionControlChangeType.Rename ||
-        change.changeType === gi.VersionControlChangeType.SourceRename ||
-        change.changeType === gi.VersionControlChangeType.TargetRename ||
-        change.changeType === gi.VersionControlChangeType.Undelete
-    );
-
     let files: PullRequestFileChanges = [];
 
     for (const change of pullRequestChanges) {

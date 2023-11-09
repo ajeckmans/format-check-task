@@ -114,13 +114,13 @@ export class PullRequestService {
                 'Authorization': `Basic ${encodedToken}`
             }
         });
-        console.log(`body:\n${response.body}`)
-        let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
+
+            let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
 
         let changes = commitDiffs.changes || [];
 
         console.log("Pull request changes: ");
-        changes.forEach(change => console.log(`${change.item?.path} - ${change.changeType ? gi.VersionControlChangeType[change.changeType] : 'unknown'} - ${change.item?.commitId}`));
+        changes.forEach(change => console.log(`${change.item?.path} - ${change.changeType} - ${change.item?.commitId}`));
 
         return changes;
     }
