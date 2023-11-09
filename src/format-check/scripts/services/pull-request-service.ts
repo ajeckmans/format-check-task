@@ -96,8 +96,8 @@ export class PullRequestService {
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
         const pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
-        let sourceRefName = pr.sourceRefName?.replace('/refs/heads/', '');
-        let targetRefName = pr.targetRefName?.replace('/refs/heads/', '');
+        let sourceRefName = pr.sourceRefName?.replace('refs/heads/', '');
+        let targetRefName = pr.targetRefName?.replace('refs/heads/', '');
 
         console.log(`Checking for file changes between ${sourceRefName} and ${targetRefName}`);
 
