@@ -95,12 +95,11 @@ export class PullRequestService {
      * made in the pull request. If there are no changes, an empty array is returned.
      */
     async getPullRequestChanges(): Promise<gi.GitChange[]> {
-        console.log(`Checking for file changes between ${this.settings.Environment.pullRequestSourceCommit} and ${this.settings.Environment.pullRequestTargetBranch}`);
-
-        const pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);
-
+        const pr = await this.gitApi.getPullRequestById(this.settings.Environment.pullRequestId, this.settings.Environment.projectId);        
         let sourceRefName = pr.sourceRefName?.replace('/refs/heads/', '');
         let targetRefName = pr.targetRefName?.replace('/refs/heads/', '');
+
+        console.log(`Checking for file changes between ${sourceRefName} and ${targetRefName}`);
 
         const token = this.settings.Parameters.token;
         const encodedToken = Buffer.from(`:${token}`).toString('base64');
@@ -108,7 +107,7 @@ export class PullRequestService {
         const response = await fetch(
             `${this.settings.Environment.orgUrl}${this.settings.Environment.projectId}/` +
             `_apis/git/repositories/${this.settings.Environment.repoId}/diffs/commits` +
-            `?api-version=7.1&baseVersion=${sourceRefName}&targetVersion=${targetRefName}` +
+            `?api-version=7.1&baseVersion=${targetRefName}&targetVersion=${sourceRefName}` +
             `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`, {
                 headers: {
                     'Authorization': `Basic ${encodedToken}`
