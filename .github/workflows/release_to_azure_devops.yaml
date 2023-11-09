@@ -2,6 +2,8 @@ name: Release to Azure DevOps Marketplace
 
 on:
     push:
+        branches:
+            - 'main'
         tags:
             - 'v*'
     pull_request:
@@ -11,7 +13,6 @@ on:
 jobs:
     package-and-publish:
         runs-on: ubuntu-latest
-        if: (github.event_name == 'pull_request') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         defaults:
             run:
                 shell: bash -e {0}
