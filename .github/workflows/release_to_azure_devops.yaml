@@ -99,15 +99,3 @@ jobs:
             tfx extension publish --vsix ajeckmans.format-check-${{ env.EXT_VERSION }}.vsix --token ${{ secrets.AZURE_DEVOPS_PAT }}
           fi
         working-directory: src
-
-      - name: Create GitHub Release
-        id: create_release
-        if: github.event_name != 'pull_request'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.event_name == 'pull_request' && 'Prerelease' || 'Release' }} ${{ env.EXT_VERSION }}
-          draft: ${{ github.event_name == 'pull_request' }}
-          prerelease: ${{ github.event_name == 'pull_request' }}
