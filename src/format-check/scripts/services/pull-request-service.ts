@@ -106,7 +106,7 @@ export class PullRequestService {
 
         var url = `${this.settings.Environment.orgUrl}${this.settings.Environment.projectId}/` +
             `_apis/git/repositories/${this.settings.Environment.repoId}/diffs/commits` +
-            `?api-version=7.1&baseVersion=${targetRefName}&targetVersion=${sourceRefName}` +
+            `?api-version=4.1&baseVersion=${targetRefName}&targetVersion=${sourceRefName}` +
             `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`;
         console.log(`Fetching ${url}`);
         const response = await fetch(url, {
