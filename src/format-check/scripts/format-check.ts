@@ -260,12 +260,17 @@ async function setPullRequestStatusAndDetermineShouldFailTask(
     formatIssuesExist: boolean,
     failOnFormattingErrors: boolean,
     setStatusCheck: boolean): Promise<boolean> {
-    if (formatIssuesExist && failOnFormattingErrors) {
-        console.log(`##vso[task.complete result=Failed;]Code format is incorrect.`);
+    if (formatIssuesExist) {
         if (setStatusCheck) {
             await pullRequestService.updatePullRequestStatus(gi.GitStatusState.Failed, getStatusDescription);
         }
-        return true;
+        if(failOnFormattingErrors){
+            console.log(`##vso[task.complete result=Failed;]Code format is incorrect.`);
+            return true;
+        } else {
+            console.log(`##vso[task.complete result=Succeeded;]Code format is incorrect.`);
+            return false;
+        }
     } else {
         console.log(`##vso[task.complete result=Succeeded;]Code format is correct.`);
         if (setStatusCheck) {
