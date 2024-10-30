@@ -18,6 +18,19 @@
                 "StatusCheckGenre": "INPUT_STATUSCHECKGENRE",
                 "ScopeToPullRequest": "INPUT_SCOPETOPULLREQUEST"
             }
+        },
+        "Node20_1": {
+            "target": "scripts/main.js",
+            "inputs": {
+                "SolutionPath": "INPUT_SOLUTIONPATH",
+                "IncludePath": "INPUT_INCLUDEPATH",
+                "ExcludePath": "INPUT_EXCLUDEPATH",
+                "FailOnFormattingErrors": "INPUT_FAILONFORMATTINGERRORS",
+                "StatusCheck": "INPUT_STATUSCHECK",
+                "StatusCheckName": "INPUT_STATUSCHECKNAME",
+                "StatusCheckGenre": "INPUT_STATUSCHECKGENRE",
+                "ScopeToPullRequest": "INPUT_SCOPETOPULLREQUEST"
+            }
         }
     },
     "inputs": [
