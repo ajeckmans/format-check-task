@@ -23,12 +23,8 @@ describe('FormatCheckRunner', () => {
     beforeEach(() => {
         jest.clearAllMocks();
 
-        exitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
-            if (typeof code === 'string') {
-                exitCode = 1;
-            } else {
-                exitCode = code ?? 0;
-            }
+        exitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: number | undefined) => {
+            exitCode = code ?? 0;
             return undefined as unknown as never;
         }) as unknown as jest.Mock;
     });
