@@ -3,7 +3,7 @@ import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GitPullRequestCommentThread } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { Settings } from "../types/settings";
 import { BaseGitApiService } from "./base-git-api-service";
-import fetch from "node-fetch";
+const fetchModule = import('node-fetch');
 
 /**
  * PullRequestService class is a service that offers methods to interact with pull requests.
@@ -109,6 +109,7 @@ export class PullRequestService {
             `?api-version=4.1&baseVersion=${targetRefName}&targetVersion=${sourceRefName}` +
             `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`;
         console.log(`Fetching ${url}`);
+        const { default: fetch } = await fetchModule;
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Basic ${encodedToken}`
