@@ -71,7 +71,6 @@ jobs:
       - name: Remove docs folders from node_modules
         run: |
           find ./node_modules -type d -name "docs" -exec rm -rf {} +
-        working-directory: src/format-check
 
       - name: Remove .test.ts files
         run: find . -type f -name "*.test.ts" -delete
