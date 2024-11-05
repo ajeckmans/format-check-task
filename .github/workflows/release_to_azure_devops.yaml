@@ -68,6 +68,10 @@ jobs:
         run: npm prune --production
         working-directory: src/format-check
 
+      - name: Remove docs folders from node_modules
+        run: |
+          find ./node_modules -type d -name "docs" -exec rm -rf {} +
+
       - name: Remove .test.ts files
         run: find . -type f -name "*.test.ts" -delete
         working-directory: src/format-check
