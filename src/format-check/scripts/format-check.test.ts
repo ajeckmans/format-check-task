@@ -61,7 +61,36 @@ describe('getChangedFilesInPR', () => {
 
         // Assert
         expect(result).toHaveLength(1);
-        expect(result).toEqual([new PullRequestFileChange('path/to/test.ts', 'commit123', gi.VersionControlChangeType.Edit)]);
+        expect(result).toEqual([new PullRequestFileChange('path/to/test.ts', 'commit123', gi.VersionControlChangeType.Edit, [])]);
+    });
+
+    it('should extract line changes from pull request changes', async () => {
+        // Arrange
+        const changesListMock = [
+            {
+                changeType: gi.VersionControlChangeType.Edit,
+                item: {
+                    path: 'path/to/test.ts',
+                    commitId: 'commit123'
+                },
+                changes: [
+                    {
+                        addedLines: [{ lineNumber: 10 }, { lineNumber: 11 }],
+                        removedLines: [{ lineNumber: 5 }]
+                    }
+                ]
+            }
+        ];
+
+        (pullRequestServiceMock.getPullRequestChanges as jest.Mock).mockReturnValue(changesListMock);
+
+        // Act
+        const result = await getChangedFilesInPR(pullRequestServiceMock, settingsMock);
+
+        // Assert
+        expect(result).toHaveLength(1);
+        expect(result[0].FilePath).toEqual('path/to/test.ts');
+        expect(result[0].lineChanges).to.deep.equal([5, 10, 11]);
     });
 
     it('should console warn if a change does not have a path', async () => {
@@ -214,7 +243,13 @@ describe('runFormatCheck', () => {
                     item: {
                         path: "/somefile.ts",
                         commitId: randomUUID()
-                    } as GitItem
+                    } as GitItem,
+                    changes: [
+                        {
+                            addedLines: [{ lineNumber: 10 }, { lineNumber: 11 }],
+                            removedLines: [{ lineNumber: 5 }]
+                        }
+                    ]
                 }
             ]
         } as gi.GitCommitDiffs;
@@ -258,5 +293,42 @@ describe('runFormatCheck', () => {
                 })
             });
         });
+
+        // Test that format issues are filtered to only include those in changed lines
+        const mockReportWithMultipleIssues: FormatReports = [
+            {
+                DocumentId: document,
+                FileName: "somefile.ts",
+                FilePath: "/src/somefile.ts",
+                FileChanges: [
+                    {
+                        CharNumber: 1,
+                        DiagnosticId: randomUUID(),
+                        LineNumber: 2, // Not in changed lines
+                        FormatDescription: "some error"
+                    },
+                    {
+                        CharNumber: 1,
+                        DiagnosticId: randomUUID(),
+                        LineNumber: 10, // In changed lines
+                        FormatDescription: "some error in changed line"
+                    }
+                ]
+            }
+        ];
+
+        (fs.readFileSync as jest.Mock).mockImplementation(() => JSON.stringify(mockReportWithMultipleIssues));
+
+        // Reset mocks
+        mockGitApi.createThread.mockReset();
+        mockGitApi.updateThread.mockReset();
+
+        expect(await runFormatCheck(mockSettings)).toEqual(true); // Should return true because there is a formatting error in a changed line
+
+        // Verify that only the issue on line 10 (a changed line) was reported
+        expect(mockGitApi.createThread).toHaveBeenCalled();
+        const threadArgs = mockGitApi.createThread.mock.calls[0][0];
+        expect(threadArgs.comments[0].content).toContain("LineNumber: 10");
+        expect(threadArgs.comments[0].content).not.toContain("LineNumber: 2");
     });
 });
