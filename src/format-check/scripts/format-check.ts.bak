@@ -69,17 +69,6 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
             }
             return include;
         });
-
-        // Filter format issues to only include those in changed lines
-        annotatedReports = annotatedReports.map(report => {
-            const change = changedInPR.find(c => c.FilePath === report.FilePath);
-            if (change && change.lineChanges.length > 0) {
-                report.FileChanges = report.FileChanges.filter(changeData =>
-                    change.lineChanges.includes(changeData.LineNumber)
-                );
-            }
-            return report;
-        }).filter(report => report.FileChanges.length > 0);
     }
 
     // Update the Pull Request comment threads based on the format check reports
@@ -110,7 +99,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
 async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
     let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
-
+    
     let files: PullRequestFileChanges = [];
 
     for (const change of pullRequestChanges) {
@@ -120,38 +109,11 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
         }
 
         let normalizedPath = new PathNormalizer(settings).normalizeFilePath(change.item!.path);
-
-        // Extract line changes if available
-        let lineChanges: number[] = [];
-        if (change.changes && Array.isArray(change.changes)) {
-            for (const fileChange of change.changes) {
-                if (fileChange.addedLines && fileChange.addedLines.length > 0) {
-                    fileChange.addedLines.forEach(line => {
-                        if (line.lineNumber > 0) {
-                            lineChanges.push(line.lineNumber);
-                        }
-                    });
-                }
-                if (fileChange.removedLines && fileChange.removedLines.length > 0) {
-                    fileChange.removedLines.forEach(line => {
-                        if (line.lineNumber > 0) {
-                            lineChanges.push(line.lineNumber);
-                        }
-                    });
-                }
-            }
-        }
-
-        files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!, lineChanges));
+        files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!));
     }
 
     console.log("All changed files considered to be part of this Pull Request: ");
-    files.forEach(file => {
-        console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}`);
-        if (file.lineChanges.length > 0) {
-            console.log(`  Changed lines: ${file.lineChanges.join(', ')}`);
-        }
-    });
+    files.forEach(file => console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}`));
     return files;
 }
 
