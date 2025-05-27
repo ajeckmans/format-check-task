@@ -5,6 +5,8 @@ import {AnnotatedReports} from './types/annotated-report';
 import {FormatCheckRunner} from "./services/format-check-runner";
 import {PathNormalizer} from './utils/path-normalizer';
 import {Settings} from './types/settings';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const commentPreamble = '[DotNetFormatTask][Automated]';
 
@@ -52,11 +54,20 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
         console.log("Scoping issues to files part of the Pull Request.");
         let changedInPR = await getChangedFilesInPR(pullRequestService, settings);
 
+        // Filter reports to only include files that have changed
         annotatedReports = annotatedReports.map(report => {
             let change = changedInPR.find(c => c.FilePath === report.FilePath);
             if (change) {
                 report.commitId = change.CommitId;
                 report.changeType = change.changeType;
+
+                // If scopeToChangedLines is enabled and we have line information
+                if (settings.Parameters.scopeToChangedLines && change.lineStart !== undefined && change.lineEnd !== undefined) {
+                    // Filter file changes to only include those within the changed line range
+                    report.FileChanges = report.FileChanges.filter(changeInfo =>
+                        changeInfo.LineNumber >= change.lineStart! && changeInfo.LineNumber <= change.lineEnd!
+                    );
+                }
             }
             return report;
         }).filter(x => {
@@ -91,7 +102,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
  * @param {PullRequestService} pullRequestUtils - An instance of PullRequestService to interact with Pull Request API
  * @param {Settings} settings
  * @return {Promise<PullRequestFileChanges>} - Returns a Promise that resolves to an array of file changes.
- * Each record denotes a path, commit id and change type in a file as a result of a commit.
+ * Each record denotes a path, commit id, change type, and line range in a file as a result of a commit.
  *
  * @description
  * Function operates asynchronously, because of the nature of its service calls to GitService and PullRequestService.
@@ -99,7 +110,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
 async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
     let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
-    
+
     let files: PullRequestFileChanges = [];
 
     for (const change of pullRequestChanges) {
@@ -109,11 +120,15 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
         }
 
         let normalizedPath = new PathNormalizer(settings).normalizeFilePath(change.item!.path);
-        files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!));
+
+        files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!, lineStart, lineEnd));
     }
 
     console.log("All changed files considered to be part of this Pull Request: ");
-    files.forEach(file => console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}`));
+    files.forEach(file => {
+        let lineInfo = file.lineStart && file.lineEnd ? ` (lines ${file.lineStart}-${file.lineEnd})` : '';
+        console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}${lineInfo}`);
+    });
     return files;
 }
 

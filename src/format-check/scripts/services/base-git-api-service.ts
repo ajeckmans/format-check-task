@@ -20,7 +20,7 @@ export class BaseGitApiService {
         this.GitApi = await this.GitApiPromise;
     }
 
-    public static async getGitApi (): Promise<IGitApi> {
+    public static async getGitApi(): Promise<IGitApi> {
         if (this.GitApiPromise === null) {
             throw new Error('call BaseGitApiService.init() first');
         }

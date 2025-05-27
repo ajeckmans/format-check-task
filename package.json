@@ -1,0 +1,23 @@
+{
+  "name": "format-check-task",
+  "version": "1.0.0",
+  "description": "A task to check code formatting",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "azure-devops-node-api": "^11.0.0",
+    "jest": "^27.0.0",
+    "jest-fetch-mock": "^3.0.0",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.0",
+    "typescript": "^4.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  }
+}

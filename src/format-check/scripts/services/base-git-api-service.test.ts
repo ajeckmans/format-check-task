@@ -37,6 +37,7 @@ describe('BaseGitApiService', () => {
                     genre: 'mockGenre'
                 },
                 scopeToPullRequest: true,
+                scopeToChangedLines: false,
                 token: 'mockToken'
             }
         };
@@ -94,7 +95,7 @@ describe('BaseGitApiService', () => {
     });
 
    it('should not re-initialize if already initialized', async () => {
-       console.log(" =====================     it('should not re-initialize if already initialized', async () => { ================")
+       console.log(" ===================     it('should not re-initialize if already initialized', async () => { ================")
        const mockGetGitApi = jest.fn(() => Promise.resolve());
        const mockWebApiInstance = {getGitApi: mockGetGitApi};
 

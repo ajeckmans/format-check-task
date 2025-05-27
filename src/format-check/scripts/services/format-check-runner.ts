@@ -76,11 +76,7 @@ export class FormatCheckRunner {
    * @returns {string} - The generated command string.
    */
   private getCommandString(): string {
-    return `dotnet format ${
-      this.solutionPath
-    } --verify-no-changes --verbosity diagnostic --report ${this.reportPath} ${
-      this.includePath ? `--include ${this.includePath}` : ""
-    } ${this.excludePath ? `--exclude ${this.excludePath}` : ""}`;
+    return `dotnet format ${this.solutionPath} --verify-no-changes --verbosity diagnostic --report ${this.reportPath} ${this.includePath ? `--include ${this.includePath}` : ""} ${this.excludePath ? `--exclude ${this.excludePath}` : ""}`;
   }
 
   /**

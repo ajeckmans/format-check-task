@@ -1,7 +1,6 @@
 import {Environment} from "./environment";
 import {Parameters} from "./parameters";
 
-
 /**
  * @class Settings
  * This class represents the combination of environment data and project parameters.
@@ -65,6 +64,7 @@ export const getSettings = (): Settings => {
                     genre: process.env.INPUT_STATUSCHECKGENRE,
                 } : undefined,
             scopeToPullRequest: process.env.INPUT_SCOPETOPULLREQUEST === 'true',
+            scopeToChangedLines: process.env.INPUT_SCOPETOCHANGEDLINES === 'true',
             token: process.env.INPUT_PAT || process.env.SYSTEM_ACCESSTOKEN || (() => {
                 throw new Error("Token is not set.");
             })()
@@ -80,6 +80,7 @@ export const getSettings = (): Settings => {
     console.log(`Status Check Name: ${settings.Parameters.statusCheckContext?.name}`);
     console.log(`Status Check Genre: ${settings.Parameters.statusCheckContext?.genre}`);
     console.log(`Scope To Pull Request: ${settings.Parameters.scopeToPullRequest}`);
+    console.log(`Scope To Changed Lines: ${settings.Parameters.scopeToChangedLines}`);
 
     console.log(`OrgUrl: ${settings.Environment.orgUrl}`);
     console.log(`RepoId: ${settings.Environment.repoId}`);

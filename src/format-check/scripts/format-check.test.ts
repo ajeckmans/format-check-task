@@ -17,7 +17,7 @@ import { getChangedFilesInPR, runFormatCheck } from "./format-check";
 import { Settings } from './types/settings';
 import { BaseGitApiService } from './services/base-git-api-service';
 import { IGitApi } from 'azure-devops-node-api/GitApi';
-import fs from "fs";
+import * as fs from "fs";
 import { randomUUID } from 'crypto';
 import { FormatReports } from './types/format-report';
 import * as child_process from "child_process";
@@ -106,6 +106,7 @@ describe('runFormatCheck', () => {
                 name: "dotnet format check"
             },
             scopeToPullRequest: true,
+            scopeToChangedLines: false,
             failOnFormattingErrors: false,
             solutionPath: 'test',
             includePath: 'test',
@@ -172,7 +173,6 @@ describe('runFormatCheck', () => {
         (fs.unlinkSync as jest.Mock).mockImplementation(() => { });
         (fs.existsSync as jest.Mock).mockImplementation(() => true);
 
-
         (mockGitApi.updatePullRequest as jest.Mock).mockImplementation(jest.fn());
         (mockGitApi.getPullRequestIterations as jest.Mock).mockReturnValueOnce([
             {
@@ -236,7 +236,6 @@ describe('runFormatCheck', () => {
                 ]
             }
         ]));
-
 
         expect(await runFormatCheck(mockSettings)).toEqual(false);
 

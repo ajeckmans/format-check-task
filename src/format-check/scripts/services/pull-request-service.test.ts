@@ -54,6 +54,7 @@ describe('PullRequestService', () => {
                     genre: 'mockGenre'
                 },
                 scopeToPullRequest: true,
+                scopeToChangedLines: false,
                 token: 'mockToken'
             }
         };
@@ -67,26 +68,23 @@ describe('PullRequestService', () => {
         const status: gi.GitStatusState = gi.GitStatusState.Succeeded;
         const descriptionFunc = (_status: gi.GitStatusState) => 'description';
 
-        (mockGitApi.getPullRequestIterations as jest.Mock).mockReturnValue([
-            {
-                id: 1,
-                description: 'Initial commit',
-                author: {
-                    displayName: 'Mock Author',
-                    id: 'mock_author_123',
-                },
-                updatedAt: new Date(),
+        (mockGitApi.getPullRequestIterations as jest.Mock).mockReturnValue([{
+            id: 1,
+            description: 'Initial commit',
+            author: {
+                displayName: 'Mock Author',
+                id: 'mock_author_123',
             },
-            {
-                id: 2,
-                description: 'Updated commit',
-                author: {
-                    displayName: 'Mock Author',
-                    id: 'mock_author_123',
-                },
-                updatedAt: new Date(),
-            }
-        ]);
+            updatedAt: new Date(),
+        }, {
+            id: 2,
+            description: 'Updated commit',
+            author: {
+                displayName: 'Mock Author',
+                id: 'mock_author_123',
+            },
+            updatedAt: new Date(),
+        }]);
 
         await service.updatePullRequestStatus(status, descriptionFunc);
 
@@ -146,7 +144,7 @@ describe('PullRequestService', () => {
                         path: '/path6',
                     },
                 },
-                ],
+            ],
             diffCommonCommit: {
                 commitId: 'mockCommitId',
             },
@@ -155,13 +153,12 @@ describe('PullRequestService', () => {
         fetch.mockResponseOnce(JSON.stringify(mockReturnValue), {
             status: 200,
             headers: { 'content-type': 'application/json' },
-          });
+        });
 
         const changes = await service.getPullRequestChanges();
 
         expect(changes).toEqual(mockReturnValue.changes);
     });
-
 
     it('should getThreads correctly', async () => {
         await service.getThreads();
@@ -212,6 +209,7 @@ describe('getPullRequestService function', () => {
                     genre: 'mockGenre'
                 },
                 scopeToPullRequest: true,
+                scopeToChangedLines: false,
                 token: 'mockToken'
             }
         };

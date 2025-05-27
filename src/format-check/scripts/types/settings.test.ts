@@ -38,16 +38,15 @@ describe('getSettings', () => {
         process.env.INPUT_STATUSCHECKGENRE = 'formatting check';
         process.env.INPUT_FAILONFORMATTINGERRORS = 'true';
         process.env.INPUT_SCOPETOPULLREQUEST = 'true';
+        process.env.INPUT_SCOPETOCHANGEDLINES = 'false';
 
         process.env.SYSTEM_ACCESSTOKEN = 'token';
         process.env.INPUT_PAT = 'token';
-
 
         const settings = getSettings();
 
         // Verify token is not logged
         expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('token'));
-
 
         expect(settings).toEqual({
             Environment: {
@@ -65,6 +64,7 @@ describe('getSettings', () => {
                 failOnFormattingErrors: true,
                 includePath: '.*',
                 scopeToPullRequest: true,
+                scopeToChangedLines: false,
                 solutionPath: 'solutionPath',
                 statusCheck: true,
                 statusCheckContext: {

@@ -23,13 +23,13 @@ export class PathNormalizer {
      * Takes a file path as input and returns a normalized version of the path, relative to the project's source directory.
      *
      * @public
-     * @param {string} filePath - The absolute file path to normalise.
+     * @param {string} filePath - The absolute file path to normalize.
      * @returns {string} Normalized version of the supplied file path, relative to the project's source directory.
      */
     public normalizeFilePath(filePath: string): string {
         // remove trailing slash from sourcesDirectory
         const pathToStrip = this.settings.Environment.sourcesDirectory.replace(/\/$/, '');
-        
+
         // remove the path to the source directory from the file path
         let relativeToSourceDir = filePath.replace(`${pathToStrip}`, '');
 

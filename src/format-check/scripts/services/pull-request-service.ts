@@ -101,23 +101,20 @@ export class PullRequestService {
 
         console.log(`Checking for file changes between ${sourceRefName} and ${targetRefName}`);
 
-        const token = this.settings.Parameters.token;
-        const encodedToken = Buffer.from(`:${token}`).toString('base64');
-
-        var url = `${this.settings.Environment.orgUrl}${this.settings.Environment.projectId}/` +
-            `_apis/git/repositories/${this.settings.Environment.repoId}/diffs/commits` +
-            `?api-version=4.1&baseVersion=${targetRefName}&targetVersion=${sourceRefName}` +
-            `&targetVersionType=branch&baseVersionType=branch&diffCommonCommit=false`;
-        console.log(`Fetching ${url}`);
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Basic ${encodedToken}`
+        const fileDiffs = await this.gitApi.getFileDiffs(
+            this.settings.Environment.repoId,
+            this.settings.Environment.pullRequestId,
+            this.settings.Environment.projectId,
+            {
+                baseVersion: targetRefName,
+                targetVersion: sourceRefName,
+                targetVersionType: gi.VersionControlRecursionType.Full,
+                baseVersionType: gi.VersionControlRecursionType.Full,
+                diffCommonCommit: false
             }
-        });
+        );
 
-        let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
-
-        return commitDiffs.changes || [];
+        return fileDiffs.map(diff => diff.changes);
     }
 
     /**
@@ -144,7 +141,6 @@ export class PullRequestService {
             this.settings.Environment.pullRequestId,
             this.settings.Environment.projectId);
     }
-
 
     /**
      * Asynchronously updates a specific thread of a pull request.
