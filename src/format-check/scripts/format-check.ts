@@ -1,4 +1,13 @@
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
+
+// Extend the GitChange interface to include the changes property
+interface ExtendedGitChange extends gi.GitChange {
+    changes?: Array<{
+        addedLines?: Array<{ lineNumber: number }>;
+        removedLines?: Array<{ lineNumber: number }>;
+    }>;
+}
+
 import {PullRequestFileChange, PullRequestFileChanges} from './types/pull-request-file-change';
 import {PullRequestService, getPullRequestService} from './services/pull-request-service';
 import {AnnotatedReports} from './types/annotated-report';
@@ -109,7 +118,7 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
  */
 async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
-    let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
+    let pullRequestChanges = await pullRequestUtils.getPullRequestChanges() as ExtendedGitChange[];
 
     let files: PullRequestFileChanges = [];
 
@@ -123,21 +132,25 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
 
         // Extract line changes if available
         let lineChanges: number[] = [];
-        if (change.changes && Array.isArray(change.changes)) {
-            for (const fileChange of change.changes) {
-                if (fileChange.addedLines && fileChange.addedLines.length > 0) {
-                    fileChange.addedLines.forEach(line => {
-                        if (line.lineNumber > 0) {
-                            lineChanges.push(line.lineNumber);
-                        }
-                    });
-                }
-                if (fileChange.removedLines && fileChange.removedLines.length > 0) {
-                    fileChange.removedLines.forEach(line => {
-                        if (line.lineNumber > 0) {
-                            lineChanges.push(line.lineNumber);
-                        }
-                    });
+        if (change) {
+            // In the mock data, GitChange has a 'changes' property, but in the actual interface it doesn't
+            // We need to check if the change has a 'changes' property and handle it
+            if (change.changes && Array.isArray(change.changes)) {
+                for (const fileChange of change.changes) {
+                    if (fileChange.addedLines && Array.isArray(fileChange.addedLines)) {
+                        fileChange.addedLines.forEach((line: any) => {
+                            if (line && line.lineNumber > 0) {
+                                lineChanges.push(line.lineNumber);
+                            }
+                        });
+                    }
+                    if (fileChange.removedLines && Array.isArray(fileChange.removedLines)) {
+                        fileChange.removedLines.forEach((line: any) => {
+                            if (line && line.lineNumber > 0) {
+                                lineChanges.push(line.lineNumber);
+                            }
+                        });
+                    }
                 }
             }
         }

@@ -3,7 +3,7 @@ import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GitPullRequestCommentThread } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { Settings } from "../types/settings";
 import { BaseGitApiService } from "./base-git-api-service";
-import fetch from "node-fetch";
+const fetch = require('node-fetch');
 
 /**
  * PullRequestService class is a service that offers methods to interact with pull requests.
@@ -115,9 +115,15 @@ export class PullRequestService {
             }
         });
 
-        let commitDiffs: gi.GitCommitDiffs = (await response.json()) as gi.GitCommitDiffs;
+        let commitDiffs: gi.GitCommitDiffs;
+        try {
+            commitDiffs = (await response.json()) as gi.GitCommitDiffs;
+        } catch (error) {
+            console.error("Error parsing JSON response:", error);
+            return [];
+        }
 
-        return commitDiffs.changes || [];
+        return commitDiffs?.changes || [];
     }
 
     /**
