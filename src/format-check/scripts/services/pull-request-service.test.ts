@@ -1,5 +1,5 @@
-import fetch from 'jest-fetch-mock';
-fetch.enableMocks();
+import fetch from 'node-fetch';
+jest.mock('node-fetch', () => jest.fn());
 
 jest.mock('./base-git-api-service', () => {
     return {
@@ -60,7 +60,7 @@ describe('PullRequestService', () => {
 
         service = new PullRequestService(mockGitApi, settings);
 
-        fetch.resetMocks();
+        // fetch.resetMocks();
     });
 
     it('should updatePullRequestStatus correctly', async () => {
@@ -90,7 +90,7 @@ describe('PullRequestService', () => {
 
         await service.updatePullRequestStatus(status, descriptionFunc);
 
-        expect(mockGitApi.createPullRequestStatus).toBeCalled();  // Add more assertions based on your logic
+        expect(mockGitApi.createPullRequestStatus).toHaveBeenCalled();  // Add more assertions based on your logic
     });
 
     it('should getPullRequestChanges correctly', async () => {
@@ -152,10 +152,10 @@ describe('PullRequestService', () => {
             },
         };
 
-        fetch.mockResponseOnce(JSON.stringify(mockReturnValue), {
+(fetch as jest.Mock).mockResolvedValueOnce({
             status: 200,
-            headers: { 'content-type': 'application/json' },
-          });
+            json: async () => mockReturnValue,
+        });
 
         const changes = await service.getPullRequestChanges();
 
@@ -165,7 +165,7 @@ describe('PullRequestService', () => {
 
     it('should getThreads correctly', async () => {
         await service.getThreads();
-        expect(mockGitApi.getThreads).toBeCalled();
+        expect(mockGitApi.getThreads).toHaveBeenCalled();
     });
 
     it('should updateThread correctly', async () => {
@@ -174,7 +174,7 @@ describe('PullRequestService', () => {
 
         await service.updateThread(thread, existingThreadId);
 
-        expect(mockGitApi.updateThread).toBeCalled();
+        expect(mockGitApi.updateThread).toHaveBeenCalled();
     });
 
     it('should createThread correctly', async () => {
@@ -182,7 +182,7 @@ describe('PullRequestService', () => {
 
         await service.createThread(thread);
 
-        expect(mockGitApi.createThread).toBeCalled();
+        expect(mockGitApi.createThread).toHaveBeenCalled();
     });
 });
 
