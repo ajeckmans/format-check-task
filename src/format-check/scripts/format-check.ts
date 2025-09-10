@@ -109,6 +109,9 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
         } catch (error) {
             attempt++;
             console.warn(`Attempt ${attempt} to getPullRequestChanges failed: ${error}`);
+            if (attempt < maxRetries) {
+                await new Promise(res => setTimeout(res, 1000 * attempt));
+            }
         }
     }
 
