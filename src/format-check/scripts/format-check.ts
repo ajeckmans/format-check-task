@@ -98,7 +98,22 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
  */
 async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
-    let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
+    let pullRequestChanges;
+    const maxRetries = 3;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+        try {
+            // Due to intermittent issues with Azure DevOps API (ECONNRESET), we implement a retry mechanism
+            pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
+            break;
+        } catch (error) {
+            attempt++;
+            console.warn(`Attempt ${attempt} to getPullRequestChanges failed: ${error}`);
+            if (attempt >= maxRetries) {
+                throw new Error(`getPullRequestChanges failed after ${maxRetries} attempts: ${error}`);
+            }
+        }
+    }
     
     let files: PullRequestFileChanges = [];
 
