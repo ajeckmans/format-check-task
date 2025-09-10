@@ -109,10 +109,11 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
         } catch (error) {
             attempt++;
             console.warn(`Attempt ${attempt} to getPullRequestChanges failed: ${error}`);
-            if (attempt >= maxRetries) {
-                throw new Error(`getPullRequestChanges failed after ${maxRetries} attempts: ${error}`);
-            }
         }
+    }
+
+    if (!pullRequestChanges) {
+        throw new Error("Pull request changes could not be retrieved.");
     }
     
     let files: PullRequestFileChanges = [];
