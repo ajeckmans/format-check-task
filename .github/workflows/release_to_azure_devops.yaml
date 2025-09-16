@@ -71,6 +71,10 @@ jobs:
       - name: Remove .test.ts files
         run: find . -type f -name "*.test.ts" -delete
         working-directory: src/format-check
+      
+      - name: Remove common no-code directories from node_modules
+        run: find . -type d \( -name "docs" -o -name "doc" -o -name "test" -o -name "examples" \) -exec rm -rf {} +
+        working-directory: src/format-check
 
       - name: Compile TypeScript
         run: tsc
