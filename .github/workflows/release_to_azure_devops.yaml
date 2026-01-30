@@ -45,17 +45,13 @@ jobs:
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
 
-          # For PR builds, use a timestamp-based version to ensure it's always increasing
-          # Use current timestamp in seconds since epoch to guarantee uniqueness and increasing order
-          TIMESTAMP=$(date +%s)
-          # Add a portion of the run ID to ensure even more uniqueness
-          SHORT_RUN_ID=$((${{ github.run_id }} % 999))
-          COMBINED_PATCH=$((TIMESTAMP + SHORT_RUN_ID))
-
-          EXT_VERSION="${MAJOR}.${MINOR}.${COMBINED_PATCH}"
+          # For PR builds, increment the minor version and reset patch to 0
+          # This ensures we always get a higher version than any patch version
+          NEXT_MINOR=$((MINOR + 1))
+          EXT_VERSION="${MAJOR}.${NEXT_MINOR}.0"
           echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
 
-          NEXT_VERSION="${MAJOR}.${MINOR}.${COMBINED_PATCH}"
+          NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.0"
           echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
 
       - name: Restore npm packages
