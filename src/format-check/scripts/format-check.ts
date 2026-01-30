@@ -142,7 +142,7 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
     
     let files: PullRequestFileChanges = [];
 
-    for (const change of pullRequestChanges) {
+    for (const change of pullRequestChanges as ExtendedGitChange[]) {
         if (change.item!.path == undefined) {
             console.warn("Warning: File path is undefined for commit id " + change.item?.commitId);
             continue;
@@ -153,8 +153,7 @@ async function getChangedFilesInPR(pullRequestUtils: PullRequestService, setting
         // Extract line changes if available
         let lineChanges: number[] = [];
         if (change) {
-            // In the mock data, GitChange has a 'changes' property, but in the actual interface it doesn't
-            // We need to check if the change has a 'changes' property and handle it
+            // Check if the change has a 'changes' property and handle it
             if (change.changes && Array.isArray(change.changes)) {
                 for (const fileChange of change.changes) {
                     if (fileChange.addedLines && Array.isArray(fileChange.addedLines)) {
