@@ -36,7 +36,7 @@ jobs:
           git fetch --tags
 
           # Get the latest tag
-          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v1.0.0")
           echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
           # Extract version parts
@@ -45,13 +45,13 @@ jobs:
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
 
-          # For PR builds, increment the minor version and reset patch to 0
-          # This ensures we always get a higher version than any patch version
-          NEXT_MINOR=$((MINOR + 1))
-          EXT_VERSION="${MAJOR}.${NEXT_MINOR}.0"
+          # For PR builds, increment the patch version to ensure uniqueness
+          # This ensures we always get a higher version for each PR build
+          NEXT_PATCH=$((PATCH + 1))
+          EXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
           echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
 
-          NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.0"
+          NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
           echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
 
       - name: Restore npm packages
