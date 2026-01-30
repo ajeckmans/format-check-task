@@ -35,21 +35,27 @@ jobs:
         run: |
           git fetch --tags
 
+          # Get the latest tag
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
-          IFS='.' read -ra VERSION_PARTS <<< "$LATEST_TAG"
-          MAJOR=${VERSION_PARTS[0]#v}
+          # Extract version parts
+          IFS='.' read -ra VERSION_PARTS <<< "${LATEST_TAG#v}"
+          MAJOR=${VERSION_PARTS[0]}
           MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
 
-          NEXT_MINOR=$((MINOR + 1))
+          # For PR builds, use a higher patch version to ensure it's always increasing
+          # Use a high base number and add the run ID to ensure uniqueness
+          HIGH_PATCH=900000
+          SHORT_RUN_ID=$((${{ github.run_id }} % 9999))
+          COMBINED_PATCH=$((HIGH_PATCH + SHORT_RUN_ID))
 
-          NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.0"
-          echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
-
-          SHORT_RUN_ID=$((${{ github.run_id }} % 2147483647))
-          EXT_VERSION="${MAJOR}.${MINOR}.0.${SHORT_RUN_ID}"
+          EXT_VERSION="${MAJOR}.${MINOR}.${COMBINED_PATCH}"
           echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
+
+          NEXT_VERSION="${MAJOR}.${MINOR}.${COMBINED_PATCH}"
+          echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
 
       - name: Restore npm packages
         run: npm ci
