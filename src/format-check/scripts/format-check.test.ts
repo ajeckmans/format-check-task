@@ -27,7 +27,6 @@ jest.mock('node-fetch', () => jest.fn(() => Promise.resolve({
 
 
 import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { GitItem, VersionControlChangeType } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { PullRequestService } from './services/pull-request-service';
 import { PullRequestFileChange } from './types/pull-request-file-change';
@@ -109,7 +108,7 @@ describe('getChangedFilesInPR', () => {
         expect(result).toHaveLength(1);
         expect(result[0].FilePath).toEqual('path/to/test.ts');
         // Sort the lineChanges array to ensure consistent order
-        expect(result[0].lineChanges.sort()).toEqual([5, 10, 11].sort());
+        expect(result[0].lineChanges.sort((a, b) => a - b)).toEqual([5, 10, 11].sort((a, b) => a - b));
     });
 
     it('should console warn if a change does not have a path', async () => {
@@ -273,7 +272,7 @@ describe('runFormatCheck', () => {
             ]
         } as any;
 
-        jest.spyOn(global, 'fetch').mockResolvedValue({
+        jest.spyOn(globalThis, 'fetch').mockResolvedValue({
             ok: true,
             status: 200,
             json: () => Promise.resolve(mockGitCommitDiffs),

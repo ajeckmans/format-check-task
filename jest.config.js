@@ -6,7 +6,7 @@ module.exports = {
       'ts-jest',
       {
         tsconfig: 'tsconfig.json',
-        stringifyContentPathRegex: '\\.html$',
+        stringifyContentPathRegex: String.raw`\.html$`,
       },
     ],
   },
@@ -21,7 +21,7 @@ module.exports = {
   globals: {
     'ts-jest': {
       tsconfig: 'tsconfig.json',
-      stringifyContentPathRegex: '\\.html$',
+      stringifyContentPathRegex: String.raw`\.html$`,
     },
   },
   

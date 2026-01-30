@@ -60,7 +60,7 @@ describe('PullRequestService', () => {
 
         service = new PullRequestService(mockGitApi, settings);
 
-        // fetch.resetMocks();
+
     });
 
     it('should updatePullRequestStatus correctly', async () => {
