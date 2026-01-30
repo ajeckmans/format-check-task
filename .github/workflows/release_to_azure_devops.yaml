@@ -41,15 +41,14 @@ jobs:
           IFS='.' read -ra VERSION_PARTS <<< "$LATEST_TAG"
           MAJOR=${VERSION_PARTS[0]#v}
           MINOR=${VERSION_PARTS[1]}
-          PATCH=${VERSION_PARTS[2]}
 
           NEXT_MINOR=$((MINOR + 1))
 
-          NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.${PATCH}"
+          NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.0"
           echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_ENV
 
           SHORT_RUN_ID=$((${{ github.run_id }} % 2147483647))
-          EXT_VERSION="${MAJOR}.${MINOR}.${PATCH}.${SHORT_RUN_ID}"
+          EXT_VERSION="${MAJOR}.${MINOR}.0.${SHORT_RUN_ID}"
           echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
 
       - name: Restore npm packages
@@ -70,6 +69,10 @@ jobs:
 
       - name: Remove .test.ts files
         run: find . -type f -name "*.test.ts" -delete
+        working-directory: src/format-check
+      
+      - name: Remove common no-code directories from node_modules
+        run: find . -type d \( -name "docs" -o -name "doc" -o -name "test" -o -name "examples" \) -exec rm -rf {} +
         working-directory: src/format-check
 
       - name: Compile TypeScript
