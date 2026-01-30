@@ -1,13 +1,4 @@
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-
-// Extend the GitChange interface to include the changes property
-interface ExtendedGitChange extends gi.GitChange {
-    changes?: Array<{
-        addedLines?: Array<{ lineNumber: number }>;
-        removedLines?: Array<{ lineNumber: number }>;
-    }>;
-}
-
 import {PullRequestFileChange, PullRequestFileChanges} from './types/pull-request-file-change';
 import {PullRequestService, getPullRequestService} from './services/pull-request-service';
 import {AnnotatedReports} from './types/annotated-report';
@@ -78,17 +69,6 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
             }
             return include;
         });
-
-        // Filter format issues to only include those in changed lines
-        annotatedReports = annotatedReports.map(report => {
-            const change = changedInPR.find(c => c.FilePath === report.FilePath);
-            if (change && change.lineChanges.length > 0) {
-                report.FileChanges = report.FileChanges.filter(changeData =>
-                    change.lineChanges.includes(changeData.LineNumber)
-                );
-            }
-            return report;
-        }).filter(report => report.FileChanges.length > 0);
     }
 
     // Update the Pull Request comment threads based on the format check reports
@@ -118,72 +98,22 @@ async function runFormatCheck(settings: Settings): Promise<boolean> {
  */
 async function getChangedFilesInPR(pullRequestUtils: PullRequestService, settings: Settings): Promise<PullRequestFileChanges> {
     console.log("Getting the PR commits...");
-  
-    let pullRequestChanges;
-    const maxRetries = 3;
-    let attempt = 0;
-    while (attempt < maxRetries) {
-        try {
-            // Due to intermittent issues with Azure DevOps API (ECONNRESET), we implement a retry mechanism
-            pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
-            break;
-        } catch (error) {
-            attempt++;
-            console.warn(`Attempt ${attempt} to getPullRequestChanges failed: ${error}`);
-            if (attempt < maxRetries) {
-                await new Promise(res => setTimeout(res, 1000 * attempt));
-            }
-        }
-    }
-
-    if (!pullRequestChanges) {
-        throw new Error("Pull request changes could not be retrieved.");
-    }
+    let pullRequestChanges = await pullRequestUtils.getPullRequestChanges();
     
     let files: PullRequestFileChanges = [];
 
-    for (const change of pullRequestChanges as ExtendedGitChange[]) {
+    for (const change of pullRequestChanges) {
         if (change.item!.path == undefined) {
             console.warn("Warning: File path is undefined for commit id " + change.item?.commitId);
             continue;
         }
 
         let normalizedPath = new PathNormalizer(settings).normalizeFilePath(change.item!.path);
-
-        // Extract line changes if available
-        let lineChanges: number[] = [];
-        if (change) {
-            // Check if the change has a 'changes' property and handle it
-            if (change.changes && Array.isArray(change.changes)) {
-                for (const fileChange of change.changes) {
-                    if (fileChange.addedLines && Array.isArray(fileChange.addedLines)) {
-                        fileChange.addedLines.forEach((line: any) => {
-                            if (line && line.lineNumber > 0) {
-                                lineChanges.push(line.lineNumber);
-                            }
-                        });
-                    }
-                    if (fileChange.removedLines && Array.isArray(fileChange.removedLines)) {
-                        fileChange.removedLines.forEach((line: any) => {
-                            if (line && line.lineNumber > 0) {
-                                lineChanges.push(line.lineNumber);
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!, lineChanges));
+        files.push(new PullRequestFileChange(normalizedPath, change.item?.commitId!, change.changeType!));
     }
 
     console.log("All changed files considered to be part of this Pull Request: ");
-    files.forEach(file => {
-        console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}`);
-        if (file.lineChanges.length > 0) {
-            console.log(`  Changed lines: ${file.lineChanges.join(', ')}`);
-        }
-    });
+    files.forEach(file => console.log(`${file.FilePath} - ${file.changeType} - ${file.CommitId}`));
     return files;
 }
 

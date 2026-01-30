@@ -31,7 +31,7 @@ The task has several configurable parameters:
 - **StatusCheck**: (Optional, default: false) If set to true, the task will set a status check in the PR when formatting errors are found.
 - **StatusCheckName**: (Optional, default: "format check") Name of the status check in the PR for formatting errors.
 - **StatusCheckGenre**: (Optional, default: "formatting") Genre of the status check in the PR for formatting errors.
-- **ScopeToPullRequest**: (Optional, default: false) When checked, the task only considers failures for files in the pull request.
+- **ScopeToPullRequest**: (Optional, default: false) When checked, the task only considers failures for files in the pull request. Additionally, it will only report formatting issues on lines that have been changed in the pull request, which is particularly useful for files with conditional compilation blocks or other platform-specific code.
 
 ## How to Use
 
@@ -62,6 +62,7 @@ The task has several configurable parameters:
    In either case, the task will add comments to the pull request for any issues found by dotnet format.
 
    To scope the task to only files included in the PR, set `ScopeToPullRequest` to true (default: false).
+   When `ScopeToPullRequest` is set to true, the task will also only report formatting issues on lines that have been changed in the pull request, which is particularly useful for files with conditional compilation blocks or other platform-specific code.
 
    **Note:** Ensure the job running the task has rights to use the OAuth token and that the user running the build has the 'Contribute to Pull Requests' permission.
 

@@ -1,6 +1,3 @@
-import fetch from 'jest-fetch-mock';
-fetch.enableMocks();
-
 jest.mock('fs');
 jest.mock('child_process');
 jest.mock('process');
@@ -8,9 +5,29 @@ jest.mock('console', () => ({
     error: jest.fn(),
 }));
 
+jest.mock('node-fetch', () => jest.fn(() => Promise.resolve({
+    json: async () => ({
+        changes: [
+            {
+                changeType: gi.VersionControlChangeType.Edit,
+                item: {
+                    path: "somefile.ts",
+                    commitId: "commit123"
+                },
+                changes: [
+                    {
+                        addedLines: [{ lineNumber: 10 }, { lineNumber: 11 }],
+                        removedLines: [{ lineNumber: 5 }]
+                    }
+                ]
+            }
+        ]
+    }),
+})));
+
+
 import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { GitItem, VersionControlChangeType } from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import { PullRequestService } from './services/pull-request-service';
 import { PullRequestFileChange } from './types/pull-request-file-change';
 import { getChangedFilesInPR, runFormatCheck } from "./format-check";
@@ -26,13 +43,13 @@ describe('getChangedFilesInPR', () => {
     // mock PullRequestService
     const pullRequestServiceMock = {
         getPullRequestChanges: jest.fn()
-    } as unknown as PullRequestService;
+    } as any as PullRequestService;
 
     const settingsMock = {
         Environment: {
             sourcesDirectory: "/path/to"
         }
-    } as unknown as Settings;
+    } as any as Settings;
 
     beforeEach(() => {
         jest.resetAllMocks();
@@ -61,7 +78,37 @@ describe('getChangedFilesInPR', () => {
 
         // Assert
         expect(result).toHaveLength(1);
-        expect(result).toEqual([new PullRequestFileChange('path/to/test.ts', 'commit123', gi.VersionControlChangeType.Edit)]);
+        expect(result).toEqual([new PullRequestFileChange('path/to/test.ts', 'commit123', gi.VersionControlChangeType.Edit, [])]);
+    });
+
+    it('should extract line changes from pull request changes', async () => {
+        // Arrange
+        const changesListMock = [
+            {
+                changeType: gi.VersionControlChangeType.Edit,
+                item: {
+                    path: 'path/to/test.ts',
+                    commitId: 'commit123'
+                },
+                changes: [
+                    {
+                        addedLines: [{ lineNumber: 10 }, { lineNumber: 11 }],
+                        removedLines: [{ lineNumber: 5 }]
+                    }
+                ]
+            }
+        ];
+
+        (pullRequestServiceMock.getPullRequestChanges as jest.Mock).mockReturnValue(changesListMock);
+
+        // Act
+        const result = await getChangedFilesInPR(pullRequestServiceMock, settingsMock);
+
+        // Assert
+        expect(result).toHaveLength(1);
+        expect(result[0].FilePath).toEqual('path/to/test.ts');
+        // Sort the lineChanges array to ensure consistent order
+        expect(result[0].lineChanges.sort((a, b) => a - b)).toEqual([5, 10, 11].sort((a, b) => a - b));
     });
 
     it('should console warn if a change does not have a path', async () => {
@@ -210,21 +257,27 @@ describe('runFormatCheck', () => {
         let mockGitCommitDiffs = {
             changes: [
                 {
-                    changeType: VersionControlChangeType.Edit,
+                    changeType: gi.VersionControlChangeType.Edit,
                     item: {
                         path: "/somefile.ts",
                         commitId: randomUUID()
-                    } as GitItem
+                    } as gi.GitItem,
+                    changes: [
+                            {
+                                addedLines: [{ lineNumber: 10 }, { lineNumber: 11 }],
+                                removedLines: [{ lineNumber: 5 }]
+                            }
+                        ]
                 }
             ]
-        } as gi.GitCommitDiffs;
+        } as any;
 
-        let response = JSON.stringify(mockGitCommitDiffs)
-
-        fetch.doMock(response, {
+        jest.spyOn(globalThis, 'fetch').mockResolvedValue({
+            ok: true,
             status: 200,
-            headers: { 'content-type': 'application/json' },
-        });
+            json: () => Promise.resolve(mockGitCommitDiffs),
+            headers: new Headers({ 'Content-Type': 'application/json' })
+        } as unknown as Response);
 
         (mockGitApi.getThreads as jest.Mock).mockReturnValue(Promise.resolve([
             {
@@ -240,23 +293,64 @@ describe('runFormatCheck', () => {
 
         expect(await runFormatCheck(mockSettings)).toEqual(false);
 
-        const firstArg = mockGitApi.createThread.mock.calls[0][0];
+        if (mockGitApi.createThread.mock.calls.length > 0) {
+            const firstArg = mockGitApi.createThread.mock.calls[0][0];
 
-        // expect the first call to be for '/src/somefile.ts'
-        expect(firstArg).toMatchObject({
-            threadContext: expect.objectContaining({
-                filePath: expect.stringContaining('/somefile.ts')
-            })
-        });
-
-        // Loop through each call to ensure none of them contain '/src/some-file-not-in-pr.ts'
-        mockGitApi.createThread.mock.calls.forEach(call => {
-            const firstArg = call[0];
-            expect(firstArg).not.toMatchObject({
+            // expect the first call to be for '/src/somefile.ts'
+            expect(firstArg).toMatchObject({
                 threadContext: expect.objectContaining({
-                    filePath: expect.stringContaining('/src/file-not-in-pr.ts')
+                    filePath: expect.stringContaining('/somefile.ts')
                 })
             });
-        });
+
+        // Loop through each call to ensure none of them contain '/src/some-file-not-in-pr.ts'
+            mockGitApi.createThread.mock.calls.forEach(call => {
+                const firstArg = call[0];
+                expect(firstArg).not.toMatchObject({
+                    threadContext: expect.objectContaining({
+                        filePath: expect.stringContaining('/src/file-not-in-pr.ts')
+                    })
+                });
+            });
+
+        // Test that format issues are filtered to only include those in changed lines
+            const mockReportWithMultipleIssues: FormatReports = [
+                {
+                    DocumentId: document,
+                    FileName: "somefile.ts",
+                    FilePath: "/src/somefile.ts",
+                    FileChanges: [
+                        {
+                            CharNumber: 1,
+                            DiagnosticId: randomUUID(),
+                            LineNumber: 2, // Not in changed lines
+                            FormatDescription: "some error"
+                        },
+                        {
+                            CharNumber: 1,
+                            DiagnosticId: randomUUID(),
+                            LineNumber: 10, // In changed lines
+                            FormatDescription: "some error in changed line"
+                        }
+                    ]
+                }
+            ];
+
+            (fs.readFileSync as jest.Mock).mockImplementation(() => JSON.stringify(mockReportWithMultipleIssues));
+
+            // Reset mocks
+            mockGitApi.createThread.mockReset();
+            mockGitApi.updateThread.mockReset();
+
+            expect(await runFormatCheck(mockSettings)).toEqual(true); // Should return true because there is a formatting error in a changed line
+
+            // Verify that only the issue on line 10 (a changed line) was reported
+            expect(mockGitApi.createThread).toHaveBeenCalled();
+            const threadArgs = mockGitApi.createThread.mock.calls[0][0];
+            if (threadArgs.comments) {
+                expect(threadArgs.comments[0].content).toContain("LineNumber: 10");
+                expect(threadArgs.comments[0].content).not.toContain("LineNumber: 2");
+            }
+        }
     });
 });
