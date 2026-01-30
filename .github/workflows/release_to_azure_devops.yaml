@@ -45,11 +45,12 @@ jobs:
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
 
-          # For PR builds, use a higher patch version to ensure it's always increasing
-          # Use a high base number and add the run ID to ensure uniqueness
-          HIGH_PATCH=900000
-          SHORT_RUN_ID=$((${{ github.run_id }} % 9999))
-          COMBINED_PATCH=$((HIGH_PATCH + SHORT_RUN_ID))
+          # For PR builds, use a timestamp-based version to ensure it's always increasing
+          # Use current timestamp in seconds since epoch to guarantee uniqueness and increasing order
+          TIMESTAMP=$(date +%s)
+          # Add a portion of the run ID to ensure even more uniqueness
+          SHORT_RUN_ID=$((${{ github.run_id }} % 999))
+          COMBINED_PATCH=$((TIMESTAMP + SHORT_RUN_ID))
 
           EXT_VERSION="${MAJOR}.${MINOR}.${COMBINED_PATCH}"
           echo "EXT_VERSION=${EXT_VERSION}" >> $GITHUB_ENV
