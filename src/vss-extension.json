@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "format-check",
     "name": "Format Check dotnet",
-    "version": "1.0.0",
+    "version": "1.3.0.600000000",
     "publisher": "ajeckmans",
     "targets": [
         {
