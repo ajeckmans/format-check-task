@@ -8,7 +8,7 @@
     "runsOn": ["Agent", "DeploymentGroup"],
     "execution": {
         "Node10": {
-            "target": "scripts/main.js",
+            "target": "dist/index.js",
             "inputs": {
                 "SolutionPath": "INPUT_SOLUTIONPATH",
                 "IncludePath": "INPUT_INCLUDEPATH",
@@ -21,7 +21,7 @@
             }
         },
         "Node20_1": {
-            "target": "scripts/main.js",
+            "target": "dist/index.js",
             "inputs": {
                 "SolutionPath": "INPUT_SOLUTIONPATH",
                 "IncludePath": "INPUT_INCLUDEPATH",

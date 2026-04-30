@@ -31,11 +31,7 @@
     },
     "files": [
         {
-            "path": "format-check/node_modules",
-            "addressable": true
-        },
-        {
-            "path": "format-check/scripts",
+            "path": "format-check/dist",
             "addressable": true
         },
         {

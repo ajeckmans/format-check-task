@@ -9,13 +9,15 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.21",
     "@types/node-fetch": "^2.6.12",
+    "@vercel/ncc": "^0.38.4",
     "jest": "^29.7.0",
     "jest-fetch-mock": "^3.0.3",
     "ts-jest": "^29.3.4",
     "typescript": "^5.8.3"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "ncc build scripts/main.ts -o dist"
   },
   "jest": {
     "preset": "ts-jest",

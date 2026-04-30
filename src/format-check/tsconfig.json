@@ -1,9 +1,12 @@
 {
     "compilerOptions": {
+        "module": "CommonJS",
+        "moduleResolution": "Node",
         "types": ["node", "jest"],
         "typeRoots": ["node_modules/@types"],
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-        "strict": true
+        "strict": true,
+        "skipLibCheck": true
     }
 }
