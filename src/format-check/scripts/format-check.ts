@@ -234,6 +234,11 @@ async function updatePullRequestThreads(
                 };
                 await pullRequestService.updateThread(thread, existingThread.id);
             } else {
+                if (report.changeType === gi.VersionControlChangeType.Delete) {
+                    console.log(`Skipping creating thread for deleted file ${report.FilePath}.`);
+                    continue;
+                }
+                
                 console.log(`📝 Creating new thread for file ${report.FilePath}.`);
                 const thread = <gi.GitPullRequestCommentThread>{
                     comments: [comment],
