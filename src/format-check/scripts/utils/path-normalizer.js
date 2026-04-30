@@ -1,0 +1,37 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PathNormalizer = void 0;
+/**
+ * PathNormalizer is a class for path normalization tasks. It uses the settings object for its behavioural config.
+ * The main task is to convert an absolute file path to a relative path from the project's source directory.
+ *
+ * @class
+ * @property {Settings} settings - An object of Type Settings necessary for the working of PathNormalizer.
+ * @constructor
+ * @param {Settings} settings - Configurable settings used in path normalization tasks.
+ * @method
+ * public normalizeFilePath(filePath: string): string - Takes an absolute file path and normalizes it to be relative to the
+ * source directory specified in the `settings` object.
+ */
+var PathNormalizer = /** @class */ (function () {
+    function PathNormalizer(settings) {
+        this.settings = settings;
+    }
+    /**
+     * Takes a file path as input and returns a normalized version of the path, relative to the project's source directory.
+     *
+     * @public
+     * @param {string} filePath - The absolute file path to normalise.
+     * @returns {string} Normalized version of the supplied file path, relative to the project's source directory.
+     */
+    PathNormalizer.prototype.normalizeFilePath = function (filePath) {
+        // remove trailing slash from sourcesDirectory
+        var pathToStrip = this.settings.Environment.sourcesDirectory.replace(/\/$/, '');
+        // remove the path to the source directory from the file path
+        var relativeToSourceDir = filePath.replace("".concat(pathToStrip), '');
+        // replace \ with / for windows
+        return relativeToSourceDir.replace(/\\/g, '/');
+    };
+    return PathNormalizer;
+}());
+exports.PathNormalizer = PathNormalizer;
