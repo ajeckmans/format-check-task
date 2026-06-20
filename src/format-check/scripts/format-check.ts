@@ -214,7 +214,23 @@ async function updatePullRequestThreads(
         for (const change of report.FileChanges) {
             const content = `${commentPreamble} ${change.DiagnosticId}: ${change.FormatDescription} on line ${change.LineNumber}, position ${change.CharNumber}`;
             activeIssuesContent.push(content);  // Keep track of active issues
-            const existingThread = existingThreads.find(thread => thread.comments?.some(comment => comment.content === content));
+            
+            // First try to find existing thread by exact content match
+            let existingThread = existingThreads.find(thread => thread.comments?.some(comment => comment.content === content));
+            
+            // If no match found by content, try to find by file path and line number
+            if (!existingThread) {
+                existingThread = existingThreads.find(thread => {
+                    return thread.threadContext?.filePath === report.FilePath &&
+                           thread.comments?.some(comment => {
+                               // Check if the comment is about the same issue (same line and diagnostic)
+                               const commentContent = comment.content || '';
+                               return commentContent.includes(change.DiagnosticId) &&
+                                      commentContent.includes(`line ${change.LineNumber}`) &&
+                                      commentContent.includes(commentPreamble);
+                           });
+                });
+            }
 
             const comment = <gi.Comment>{
                 content: content,

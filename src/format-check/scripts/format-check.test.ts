@@ -30,7 +30,7 @@ import * as gi from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { PullRequestService } from './services/pull-request-service';
 import { PullRequestFileChange } from './types/pull-request-file-change';
-import { getChangedFilesInPR, runFormatCheck } from "./format-check";
+import { getChangedFilesInPR, runFormatCheck, updatePullRequestThreads } from "./format-check";
 import { Settings } from './types/settings';
 import { BaseGitApiService } from './services/base-git-api-service';
 import { IGitApi } from 'azure-devops-node-api/GitApi';
@@ -352,5 +352,59 @@ describe('runFormatCheck', () => {
                 expect(threadArgs.comments[0].content).not.toContain("LineNumber: 2");
             }
         }
+    });
+
+    it('should find existing thread by file path and line number when content does not match exactly', async () => {
+        // Test the thread matching logic directly
+        const existingThreads = [
+            {
+                id: 1,
+                comments: [
+                    {
+                        content: '[DotNetFormatTask][Automated] IMPORTS: Fix imports ordering. on line 1, position 1',
+                    }
+                ],
+                threadContext: {
+                    filePath: '/src/somefile.ts'
+                }
+            }
+        ];
+
+        const reports = [
+            {
+                DocumentId: {
+                    Id: randomUUID(),
+                    ProjectId: {
+                        Id: randomUUID()
+                    }
+                },
+                FileName: "somefile.ts",
+                FilePath: "/src/somefile.ts",
+                FileChanges: [
+                    {
+                        CharNumber: 1,
+                        DiagnosticId: "IMPORTS",
+                        LineNumber: 1,
+                        FormatDescription: "Fix imports ordering"
+                    }
+                ],
+                commitId: '',
+                changeType: gi.VersionControlChangeType.None
+            }
+        ];
+
+        // Mock the necessary functions
+        const mockPullRequestService = {
+            getThreads: jest.fn().mockReturnValue(Promise.resolve(existingThreads)),
+            updateThread: jest.fn(),
+            createThread: jest.fn()
+        };
+
+        // Test the updatePullRequestThreads function directly
+        await updatePullRequestThreads(mockPullRequestService as any, reports as any);
+
+        // Verify that the existing thread was updated instead of creating a new one
+        expect(mockPullRequestService.updateThread).toHaveBeenCalled();
+        expect(mockPullRequestService.createThread).not.toHaveBeenCalled();
     });
 });
