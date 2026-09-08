@@ -160,6 +160,10 @@ describe('PullRequestService', () => {
         const changes = await service.getPullRequestChanges();
 
         expect(changes).toEqual(mockReturnValue.changes);
+        expect(fetch).toHaveBeenCalledWith(
+            expect.stringContaining('diffCommonCommit=true'),
+            expect.any(Object)
+        );
     });
 
 
